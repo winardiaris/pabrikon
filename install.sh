@@ -17,7 +17,7 @@ mv index.themes index.theme
 
 
 
-
+cd $pwd
 rm -rf  master.zip
 rm -rf pabrik-ikon-master
 

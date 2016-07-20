@@ -1,5 +1,5 @@
-# pabrik-ikon
-Membangun Ikon untuk GNU/Linux destop
+# Pabrik-ikon
+Membangun Ikon untuk destop GNU/Linux 
 
 ## Kebutuhan
 - [inkscape](https://inkscape.org/en/)
@@ -22,16 +22,34 @@ Didalam folder kerja anda setidaknya membutuhkan salah satu folder dari daftar b
 - status/scalable/
 - stock/scalable/
 
+
 Jika ini pertama kalinya anda membuat ikon untuk GNU/Linux, ketikan pada terminal perintah berikut:
 ```
 $ cd ke/folder/kerja/anda
 $ mkdir -p {actions,animations,apps,categories,devices,emblems,io,mimetypes,places,status,stock}/scalable
 
 ```
+Berkas-berkas `*.svg` disimpan di folder `scalable`
 
 ## Pemasangan
 - Unduh berkas mutakhir [disini](https://github.com/winardiaris/pabrik-ikon/archive/master.zip) dan ekstrak berkas tersebut.
-- Selanjutnya salin berkas `pabrik.sh` dan folder `data` _(ini contoh berkas untuk membuat symlink)_ ke folder kerja anda.
+- Selanjutnya salin berkas `pabrik.sh`, `index.theme` dan folder `data` _(ini contoh berkas untuk membuat symlink)_ ke folder kerja anda.
+- Ubah berkas `index.theme` sesuai keinginan anda pada bagian berikut:
+```
+[Icon Theme]
+Name=nama-ikon
+Inherits=gnome,hicolor
+Comment=komentar
+```  
+
+
+## Pemasangan cepat
+```
+wget https://raw.githubusercontent.com/winardiaris/pabrik-ikon/master/install.sh && bash ./install.sh "nama-ikon" "Deskripsi"
+```
+- ubah "`nama-ikon`" sesuai keinginan anda pastikan tidak menggunakan spasi
+- ubah "`Deskripsi`" sesuai deskripsi dari ikon yang anda buat
+
 
 
 ## Penggunaan

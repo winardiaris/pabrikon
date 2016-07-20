@@ -1,12 +1,14 @@
 # pabrik-ikon
-Generate icon theme for GNU/Linux desktop
+Membangun Ikon untuk GNU/Linux destop
 
-## Requirement
+## Kebutuhan
 - [inkscape](https://inkscape.org/en/)
 - [svgcleaner](https://sourceforge.net/projects/svgcleaner/)
 
-## Directory structure
-In your project directory, you need one or more of the following folder list
+untuk memasang aplikasi diatas silahkan ikuti dokumentasi distribusi linux yang anda pakai.
+
+## Struktur folder
+Didalam folder kerja anda setidaknya membutuhkan salah satu folder dari daftar berikut:
 
 - actions/scalable/
 - animations/scalable/
@@ -20,14 +22,35 @@ In your project directory, you need one or more of the following folder list
 - status/scalable/
 - stock/scalable/
 
-if you are just starting a project icon, you can type the following command:
+Jika ini pertama kalinya anda membuat ikon untuk GNU/Linux, ketikan pada terminal perintah berikut:
 ```
-$ cd to/your/project/dir/
+$ cd ke/folder/kerja/anda
 $ mkdir -p {actions,animations,apps,categories,devices,emblems,io,mimetypes,places,status,stock}/scalable
 
 ```
 
-## Instalation
-- Download the current version [here](https://github.com/winardiaris/pabrik-ikon/archive/master.zip) and extract
-- First copy pabrik.sh and data directory _(example data for make symlink icons)_ to your directory project
-- 
+## Pemasangan
+- Unduh berkas mutakhir [disini](https://github.com/winardiaris/pabrik-ikon/archive/master.zip) dan ekstrak berkas tersebut.
+- Selanjutnya salin berkas `pabrik.sh` dan folder `data` _(ini contoh berkas untuk membuat symlink)_ ke folder kerja anda.
+
+
+## Penggunaan
+```
+$ cd ke/folder/kerja/anda
+$ bash pabrik.sh
+
+==============================================
+Nama:Pabrik-ikon
+Versi:0.2
+==============================================
+1 Buat berkas png
+2 Buat berkas symlink
+3 Buat berkas png + symlink
+4 Vacuum SVG
+5 Minizer SVG (Belum tersedia)
+C Bersihkan area kerja
+Q Keluar
+==============================================
+
+```
+

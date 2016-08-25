@@ -1,0 +1,38 @@
+PABRIK-IKON(1)    USERMANUAL    PABRIK-IKON(1)
+
+NAME
+    pabrik-ikon 
+
+DESCRIPTION
+    Pabrik-Ikon can run on all distributions of GNU / Linux,
+    Pabrik-Ikon is designed to help developers distributions of GNU / Linux,
+    especially on the art team to create and manage an icon created for
+    the typical GNU / Linux distribution developed.
+
+OPTION
+  -b, --build
+    build icon from svg to png
+
+  -c, --clean 
+    clean project dir from png files
+
+  -h, --help
+    help
+
+  -p,--makePNG
+    build icons just PNG files without symlink
+
+  -s, --makeSYM
+    just make symlink
+
+  -v, --version
+    show pabrik-ikon version
+
+  -d
+
+EXAMPLES
+  pabrik-ikon -n <directory> <filename>
+    this for make new default svg icon with in directory/scalable/filename
+
+  pabrik-ikon --newproject <icon name> <comment/description for icon>
+    this command for make new project icons with Name=<icon name> and Comment=<comment/description for icon>

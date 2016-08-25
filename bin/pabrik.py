@@ -10,7 +10,7 @@ def newIkon(newfile,directory):
 
 def newProject(iconname,comment):
     if not os.path.exists(iconname):
-        print '[newProject]:\nName=' + iconname + "\nComment=" + comment
+        print '[newProject]:\nName=' + iconname + "\nComment=" + comment  # print new icon name and description 
         subprocess.check_output(['mkdir', '-p', iconname ])
         os.system('cp -r /opt/pabrik-ikon/data ' + iconname)
         os.system('mv ./' + iconname + '/data/index.theme ' + iconname + '/index.theme')
@@ -27,15 +27,51 @@ def newProject(iconname,comment):
 
 def makePNG():
     print '[makePNG]'
+    current_dir=os.getcwd()
+    # icon_sizes.append('scalable')
+    
+    for icon_ in list_dirs:
+        if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):
+            print current_dir + "/" + icon_ + "/scalable"
+
+            for size_ in icon_sizes:
+                if os.path.exists(current_dir + "/" + icon_ + "/" + size_ ):
+                    ##disini for berdasarkan file svg
+                    for files in os.listdir(current_dir + "/" + icon_ + "/scalable"
+                            ):
+                        file_ =  files.replace('.svg','')
+                        # print "inkscape " + current_dir + "/" + icon_ + "/scalable/" + file_ + ".svg --export-png=" + file_ + ".png --export-height=" + size_ + " --export-width=" + size_ 
+                        os.system("inkscape " + current_dir + "/" + icon_ + "/scalable/" + file_ + ".svg --export-png=" + file_ + ".png --export-height=" + size_ + " --export-width=" + size_ )
+                        ## disini move exported file ke folder ukuran masing2
+                        os.system("mv " + file_ + ".png " + current_dir + "/" + icon_ + "/" + size_ + "/")
 
 def makeSYM():
     print '[makeSYM]'
+    current_dir=os.getcwd()
+    icon_sizes.append('scalable')
+    
+    for icon_ in list_dirs:
+        if os.path.exists(current_dir + "/" + icon_ ):
+            for size_ in icon_sizes:
+                print current_dir + "/" + icon_ + "/" + size_
 
 def vaccumSVG():
     print '[vaccumSVG]'
 
 def cleanProject():
     print '[clean]'
+    current_dir=os.getcwd()
+    
+    for icon_ in list_dirs:
+        if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):
+            os.system('find ' + current_dir + '/' + icon_ + '/scalable  -type l -exec rm -rf {} \;')
+    
+        for size_ in icon_sizes:
+            if os.path.exists(current_dir + "/" + icon_ + "/" + size_ ):
+                os.system('find ' + current_dir + '/' + icon_ + '/' + size_ + ' -type f -name \'*.png\' -exec rm -rf {} \;')
+
+    print '[clean] Finished'
+
 
 def helpPabrikIkon():
     os.system('cat /opt/pabrik-ikon/man/pabrik.man')
@@ -51,8 +87,9 @@ def main(argv):
     outputfile = ''
     newfile = ''
     directory = ''
+    # current_dir = os.getcwd()
     try:
-        opts,args = getopt.getopt(argv,"bchpsvd:n:",["build","clean","dir","help","makePNG","makeSYM","new","newproject","opencsv","if","of","version","if=","of=","new=","dir="])
+        opts,args = getopt.getopt(argv,"bchpsvd:n:",["build","clean","dir","help","makePNG","makeSYM","new","newproject","opencsv","version","new=","dir="])
     except getopt.GetoptError:
         helpPabrikIkon()
         sys.exit(2)
@@ -74,7 +111,7 @@ def main(argv):
             makePNG()
             sys.exit()
         elif opt in ("-s","--makeSYM"):
-            makePNG()
+            makeSYM()
             sys.exit()
         elif opt in ("-n", "--new"):
             newIkon(argv[1],argv[2])

@@ -160,7 +160,7 @@ def make_symlink():
 def minizer_svg():
     # this is for reduce the size of svg file
     #not finished
-
+    print 'minizer'
     # how to use
     # pabrik --minizer
 
@@ -283,7 +283,7 @@ def main(argv):
             op = 'newproject'
         elif opt == "--opencsv":
             op = 'opencsv'
-        elif opt in (--source'):
+        elif opt in ('--source'):
             source = arg
         elif opt in ('-t','--type'):
             types = arg

@@ -165,11 +165,12 @@ def minizer_svg():
     # pabrik --minizer
 
 def new_ikon():
+    #not finished
     # this is for copy default default.svg to spesific 
     print '[new_ikon]: ' + directory + '/scalable/' + name + '.svg'
 
     # how to use
-    # pabrik --newikon --name=nameoficon --directory=categories
+    # pabrik --new --name=nameoficon --directory=categories
 
 def new_project():
     if not name == "default":
@@ -257,7 +258,7 @@ def main(argv):
     global types
     
     try:
-        opts,args = getopt.getopt(argv,"bchpstvd:n",["build","clean","help","makepng","makesym","new","newproject","opencsv","makecsv","version","name=","comment=","source=","types="])
+        opts,args = getopt.getopt(argv,"bcd:hpst:vn",["build","clean","help","makepng","makesym","new","newproject","opencsv","makecsv","version","name=","comment=","source=","type="])
     except getopt.GetoptError:
         help_pabrik()
         sys.exit(2)
@@ -282,7 +283,7 @@ def main(argv):
             op = 'newproject'
         elif opt == "--opencsv":
             op = 'opencsv'
-        elif opt in ('-s','--source'):
+        elif opt in (--source'):
             source = arg
         elif opt in ('-t','--type'):
             types = arg

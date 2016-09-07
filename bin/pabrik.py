@@ -183,7 +183,7 @@ def new_project():
             os.system('sed -i "s/COMMENT/' + comment  + '/g" ' + name + '/index.theme') 
             
             for icon_ in list_dirs:
-                subprocess.check_output(['mkdir', '-p', name + '/' + icon_])
+                subprocess.check_output(['mkdir', '-p', name + '/' + icon_ + '/scalable'])
 
             print '[success] make project with name `'+name+'` has been created '
         else:

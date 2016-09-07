@@ -1,23 +1,9 @@
 #!/bin/bash
-NAMA=$1
-KOMENTAR=$2
-pwd=$('pwd')
 
-wget https://github.com/winardiaris/pabrik-ikon/archive/master.zip
-unzip master.zip
-mkdir -p $pwd/$NAMA
-cp -r pabrik-ikon-master/data $pwd/$NAMA/data
-cp pabrik-ikon-master/index.theme $pwd/$NAMA
-cp pabrik-ikon-master/pabrik.sh $pwd/$NAMA
-cd $pwd/$NAMA
-mkdir -p {actions,animations,apps,categories,devices,emblems,io,mimetypes,places,status,stock}/scalable
-sed "s/nama-ikon/$NAMA/g ;s/komentar/$KOMENTAR/g" index.theme > index.themes
-rm -rf index.theme
-mv index.themes index.theme
-
-
-
-cd $pwd
-rm -rf  master.zip
-rm -rf pabrik-ikon-master
-
+cd /tmp
+wget https://github.com/winardiaris/pabrik-ikon/archive/dev-gui.zip
+unzip dev-gui.zip
+sudo move pabrik-ikon-dev-gui /opt/pabrik-ikon
+sudo ln -s /opt/pabrik-ikon/bin/pabrik.py /usr/local/bin/pabrik
+echo "[info] instalation complete"
+echo "type 'pabrik -h' for help the pabrik-ikon "

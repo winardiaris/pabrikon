@@ -22,7 +22,7 @@ def pabrik_ikon():
         clean_project()
     elif op =='help':
         help_pabrik()
-    elif op == 'makecsv': #not finished
+    elif op == 'makecsv':
         make_csv_data()
     elif op == 'makepng':
         make_png()
@@ -89,11 +89,11 @@ def make_csv_data():
         print '[info] Start copying csv file to current project'
         os.system('cp -rv /opt/pabrik-ikon/data .')
         print '[success] Copying csv file has been finished'
-    elif not source == 'default':
-        # make csv file from symlink    <= #not finished
-        print 'csv dari symlink'
-        for icon_ in list_dirs:
-            print icon_
+    elif source == 'default':
+        # make csv file from symlink
+        print '[info] Start make csv file from symlink in current project'
+        os.system('/opt/pabrik-ikon/bin/makecsv.sh')
+        print '[success] Csv file creation has been finished'
     else:
         print '[error] put --source=pabrik for make csv file from pabrik-ikon default' 
         print '[error] put --source=default for make csv file from symlink file' 

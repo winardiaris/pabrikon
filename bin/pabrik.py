@@ -28,10 +28,14 @@ def pabrik_ikon():
         make_png()
     elif op == 'makesym':
         make_symlink()
+    elif op == 'newikon':
+        new_ikon()
     elif op == 'newproject':
         new_project()
     elif op == 'opencsv':
         open_csv()
+    elif op == 'opensvg':
+        open_svg()
     elif op == 'version':
         version_pabrik_ikon()
     else:
@@ -165,9 +169,10 @@ def minizer_svg():
     # pabrik --minizer
 
 def new_ikon():
-    #not finished
     # this is for copy default default.svg to spesific 
-    print '[new_ikon]: ' + directory + '/scalable/' + name + '.svg'
+    print '[info]: make new icon ' + directory + '/scalable/' + name + '.svg'
+    os.system("cp -rv /opt/pabrik-ikon/data/default.svg ./"+directory+"/scalable/"+name+".svg")
+
 
     # how to use
     # pabrik --new --name=nameoficon --directory=categories
@@ -233,6 +238,24 @@ def open_csv():
     # pabrik --opencsv --name=NAME.csv 
     # pabrik --opencsv --name=NAME.csv --source=pabrik      <= this open default csv file from pabrik-ikon
 
+def open_svg():
+    if not name == "default":
+        if directory:
+            files = "./"+directory+"/scalable/"+name+".svg"
+            if os.path.exists(files):
+                os.system("inkscape "+files)
+            else:
+                print "[error] File "+files+" not found"
+        else:
+            os.system("find . -name '"+name+".svg' -exec inkscape {} \;")
+    else:
+        help_pabrik()
+    
+    print '[info] Open svg file has been finished'
+    
+    # how to use
+    # pabrik --open --name inkscape --directory apps
+
 def vaccum_svg():
     # this is for vaccum size  svg file with inkscape
     print '[vaccum_svg]' #not finished
@@ -252,13 +275,14 @@ def version_pabrik_ikon():
 
 def main(argv):
     global comment
+    global directory
     global name
     global op
     global source
     global types
     
     try:
-        opts,args = getopt.getopt(argv,"bcd:hpst:vn",["build","clean","help","makepng","makesym","new","newproject","opencsv","makecsv","version","name=","comment=","source=","type="])
+        opts,args = getopt.getopt(argv,"bcd:hnopst:v",["build","clean","directory=","help","makepng","makesym","new","newproject","opencsv","opensvg","makecsv","version","name=","comment=","source=","type="])
     except getopt.GetoptError:
         help_pabrik()
         sys.exit(2)
@@ -269,6 +293,8 @@ def main(argv):
             op = 'cleanproject'
         elif opt in ('--comment'):
             comment = arg
+        elif opt in ('-d','--directory'):
+            directory = arg
         elif opt in ("-h","--help"):
             op = 'help'
         elif opt == "--makecsv":
@@ -279,10 +305,14 @@ def main(argv):
             op = 'makesym'
         elif opt in ('--name'):
             name = arg
+        elif opt in ("-n","--new"):
+            op = 'newikon'
         elif opt in ("--newproject"):
             op = 'newproject'
         elif opt == "--opencsv":
             op = 'opencsv'
+        elif opt in ("-o","--open"):
+            op = 'opensvg'
         elif opt in ('--source'):
             source = arg
         elif opt in ('-t','--type'):

@@ -25,6 +25,9 @@ OPTION
   -h, --help
     output usage information
 
+  -l, --list
+    list file in current project
+
   --makecsv
     make csv file for icon project from symlink or pabrik-ikon default
 
@@ -53,7 +56,8 @@ OPTION
     this use for source of --makecsv , --newproject , --opencsv
 
   -t, --types 
-    this use type for --clean [default,png,symlink] 
+    for --clean {default|png|symlink} 
+    for --list {all|png|svg|symlink}
     
   --vaccum
     this is for vaccum size svg file with feature from inkscape
@@ -78,6 +82,9 @@ EXAMPLES
   pabrik -h
     show this help usage
 
+  pabrik -l -t {all|png|svg|symlink}
+    show list file in current project
+  
   pabrik --makecsv     
   pabrik --makecsv --source=default
     make csv file from symlink in current project

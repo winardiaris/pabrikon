@@ -35,8 +35,7 @@ The files `* .svg` stored in the folder` scalable`
 
 ## Installation
 ```
-$ cd /tmp
-$ wget https://raw.githubusercontent.com/winardiaris/pabrik-ikon/dev-gui/install.sh && bash ./install.sh 
+$ curl https://raw.githubusercontent.com/winardiaris/pabrik-ikon/master/install.sh | bash 
 ```
 
 

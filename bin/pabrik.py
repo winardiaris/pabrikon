@@ -22,6 +22,8 @@ def pabrik_ikon():
         clean_project()
     elif op =='help':
         help_pabrik()
+    elif op == 'list':
+        list_data()
     elif op == 'makecsv':
         make_csv_data()
     elif op == 'makepng':
@@ -86,6 +88,16 @@ def help_pabrik():
     # how to use
     # pabrik -h
     # pabrik --help
+def list_data():
+    print '[info] List data'
+    if types:
+        if types != 'default':
+            os.system('/opt/pabrik-ikon/bin/list.sh ' + types + ' ')
+        else:
+            os.system('/opt/pabrik-ikon/bin/list.sh all')
+    # how to use
+    # pabrik -l
+    # pabrik -l -t {all|png|svg|symlink}
 
 def make_csv_data():
     if source == 'pabrik':
@@ -282,7 +294,7 @@ def main(argv):
     global types
     
     try:
-        opts,args = getopt.getopt(argv,"bcd:hnopst:v",["build","clean","directory=","help","makepng","makesym","new","newproject","opencsv","opensvg","makecsv","version","name=","comment=","source=","type="])
+        opts,args = getopt.getopt(argv,"bcd:hlnopst:v",["build","clean","directory=","help","list","makepng","makesym","new","newproject","opencsv","opensvg","makecsv","version","name=","comment=","source=","type="])
     except getopt.GetoptError:
         help_pabrik()
         sys.exit(2)
@@ -297,6 +309,8 @@ def main(argv):
             directory = arg
         elif opt in ("-h","--help"):
             op = 'help'
+        elif opt in ("-l","--list"):
+            op = 'list'
         elif opt == "--makecsv":
             op = 'makecsv'
         elif opt in ('-p','--makepng'):

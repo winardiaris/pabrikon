@@ -1,14 +1,16 @@
 # Pabrik-ikon
-Membangun Ikon untuk destop GNU/Linux 
+Pabrik-Ikon can run on all distributions of GNU / Linux, Pabrik-Ikon is designed to help developers distributions of GNU / Linux, especially on the art team to create and manage an icon created for the typical GNU / Linux distribution developed.
 
-## Kebutuhan
+The idea to create a Pabrik-Ikon leveled by Herpiko Dwi Aguno artwork team in BlankOn Project. Pabrik-Ikon is currently only a BASH script, but it is very helpful to manage icons.
+
+In the future Pabrik-Ikon will be made a GUI-based application with features: a friendly interface, create a new project, import / export projects, one-on-one / many for export png, use Inkscape for editing, managing symlink
+
+## Requirement
 - [inkscape](https://inkscape.org/en/)
 - [svgcleaner](https://sourceforge.net/projects/svgcleaner/)
 
-untuk memasang aplikasi diatas silahkan ikuti dokumentasi distribusi linux yang anda pakai.
-
-## Struktur folder
-Didalam folder kerja anda setidaknya membutuhkan salah satu folder dari daftar berikut:
+## Directory structure
+In the folder in your working folder requires at least one of the following list:
 
 - actions/scalable/
 - animations/scalable/
@@ -20,55 +22,29 @@ Didalam folder kerja anda setidaknya membutuhkan salah satu folder dari daftar b
 - mimetypes/scalable/
 - places/scalable/
 - status/scalable/
-- stock/scalable/
+- stock/scalable/  
+- data/					<= `this use for place a csv files data for make symlink`
 
-
-Jika ini pertama kalinya anda membuat ikon untuk GNU/Linux, ketikan pada terminal perintah berikut:
+If this is the first time you create an icon for GNU / Linux, type the following command in the terminal:
 ```
-$ cd ke/folder/kerja/anda
+$ cd path/to/your/icons/project
 $ mkdir -p {actions,animations,apps,categories,devices,emblems,io,mimetypes,places,status,stock}/scalable
 
 ```
-Berkas-berkas `*.svg` disimpan di folder `scalable`
+The files `* .svg` stored in the folder` scalable`
 
-## Pemasangan
-- Unduh berkas mutakhir [disini](https://github.com/winardiaris/pabrik-ikon/archive/master.zip) dan ekstrak berkas tersebut.
-- Selanjutnya salin berkas `pabrik.sh`, `index.theme` dan folder `data` _(ini contoh berkas untuk membuat symlink)_ ke folder kerja anda.
-- Ubah berkas `index.theme` sesuai keinginan anda pada bagian berikut:
+## Installation
 ```
-[Icon Theme]
-Name=nama-ikon
-Inherits=gnome,hicolor
-Comment=komentar
-```  
-
-
-## Pemasangan cepat
+$ cd /tmp
+$ wget https://raw.githubusercontent.com/winardiaris/pabrik-ikon/dev-gui/install.sh && bash ./install.sh 
 ```
-wget https://raw.githubusercontent.com/winardiaris/pabrik-ikon/master/install.sh && bash ./install.sh "nama-ikon" "Deskripsi"
+
+
+## How to use
 ```
-- ubah "`nama-ikon`" sesuai keinginan anda pastikan tidak menggunakan spasi
-- ubah "`Deskripsi`" sesuai deskripsi dari ikon yang anda buat
+$ cd path/to/your/icons/project
+$ pabrik -h
 
-
-
-## Penggunaan
-```
-$ cd ke/folder/kerja/anda
-$ bash pabrik.sh
-
-==============================================
-Nama:Pabrik-ikon
-Versi:0.2
-==============================================
-1 Buat berkas png
-2 Buat berkas symlink
-3 Buat berkas png + symlink
-4 Vacuum SVG
-5 Minizer SVG (Belum tersedia)
-C Bersihkan area kerja
-Q Keluar
-==============================================
 
 ```
 

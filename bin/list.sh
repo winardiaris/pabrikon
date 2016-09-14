@@ -65,7 +65,11 @@ function make_data {
 function compare_latest {
   LATESTFILE="`find . -type f -name "*.png" -or -name "*.svg" -printf '%T@ %p\n' | sort -n | tail -1 | cut -f2- -d" "`"
   file_latest_modified="`stat -c %Y $LATESTFILE`"
-  data_list_modified="`stat -c %Y ./data/list.csv`"
+  if [ -f ./data/list.csv ]; then
+    data_list_modified="`stat -c %Y ./data/list.csv`"
+  else
+    data_list_modified="0"
+  fi
 
   # echo "file: $file_latest_modified"
   # echo "data: $data_list_modified"

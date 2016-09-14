@@ -22,14 +22,17 @@ script:
   - cd tebu-flat/Tebu-Flat
   - pabrik -h
   - pabrik -l
+  - pabrik --makecsv --source=pabrik
   - pabrik -c
   - pabrik -b
   - pabrik --makecsv
+  - pabrik -l -t make
   - pabrik -l -t all
   - pabrik -l -t png
   - pabrik -l -t svg
   - pabrik -l -t symlink
   - pabrik -c -t symlink
+  - pabrik -l -t symlink
   - pabrik -s
   - pabrik -l -t symlink
   - pabrik -n --name=aris --directory=apps

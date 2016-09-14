@@ -7,11 +7,18 @@ script:
   - pwd
   - ls -la ~/
   - mkdir -p ~/.local/bin
-  - ln -s /home/travis/pabrik-ikon/bin/pabrik.py /home/travis/.local/bin/pabrik
-  - ln -s /home/travis/pabrik-ikon /opt/pabrik-ikon
+  - ln -s /home/travis/build/pabrik-ikon/bin/pabrik.py /home/travis/.local/bin/pabrik
+  - chmod +x ~/.local/bin/pabrik
+  - ls /opt/
+  - ln -s /home/travis/build/pabrik-ikon /opt/pabrik-ikon
   - pabrik -h
   - mkdir ~/tmp
   - cd ~/tmp
+  - ls
   - pabrik --newproject --source=git@github.com:BlankOn/tebu-flat.git
   - cd tebu-flat/Tebu-Flat
+  - pabrik -h
   - pabrik --list
+  - pabrik -c
+  - pabrik -b
+  - pabrik --makecsv

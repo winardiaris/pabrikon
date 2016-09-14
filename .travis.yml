@@ -4,6 +4,9 @@ python:
 install: sudo apt-get install inkscape
 script: 
   - ls
+  - pwd
+  - ls -la ~/
+  - mkdir -p ~/.local/bin
   - ln -s /home/travis/pabrik-ikon/bin/pabrik.py /home/travis/.local/bin/pabrik
   - ln -s /home/travis/pabrik-ikon /opt/pabrik-ikon
   - pabrik -h

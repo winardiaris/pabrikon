@@ -14,6 +14,7 @@ script:
   - ls /opt/
   - cat ~/.bashrc
   - source ~/.bashrc
+  - export PATH=$PATH:~/.local/bin
   - pabrik -h
   - mkdir ~/tmp
   - cd ~/tmp

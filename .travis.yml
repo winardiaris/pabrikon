@@ -6,5 +6,13 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
-install: "curl https://raw.githubusercontent.com/winardiaris/pabrik-ikon/master/install.sh | bash"
-script: pabrik -h
+install: sudo apt-get install inkscape
+script: 
+  - ln -s /home/travis/pabrik-ikon/bin/pabrik.py /home/travis/.local/bin/pabrik
+  - ln -s /home/travis/pabrik-ikon /opt/pabrik-ikon
+  - pabrik -h
+  - mkdir ~/tmp
+  - cd ~/tmp
+  - pabrik --newproject --source=git@github.com:BlankOn/tebu-flat.git
+  - cd tebu-flat/Tebu-Flat
+  - pabrik --list

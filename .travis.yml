@@ -17,11 +17,19 @@ script:
   - mkdir ~/tmp
   - cd ~/tmp
   - ls
-  - pabrik --newproject --source=git@github.com:BlankOn/tebu-flat.git
+  - pabrik --newproject --source=https://github.com/BlankOn/tebu-flat.git
   - ls
   - cd tebu-flat/Tebu-Flat
   - pabrik -h
-  - pabrik --list
+  - pabrik -l
   - pabrik -c
   - pabrik -b
   - pabrik --makecsv
+  - pabrik -l -t all
+  - pabrik -l -t png
+  - pabrik -l -t svg
+  - pabrik -l -t symlink
+  - pabrik -c -t symlink
+  - pabrik -s
+  - pabrik -l -t symlink
+  - pabrik -n --name=aris --directory=apps

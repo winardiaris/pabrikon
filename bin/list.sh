@@ -56,7 +56,7 @@ function make_data {
 
     if [ -L $file ]; then
       TYPE="symlink"
-      SOURCE="`readlink f $file`"
+      SOURCE="`readlink $file`"
     fi
     echo "$DIRECTORY,$FILENAME,$TYPE,$SOURCE,$FILESIZE" >> data/list.csv
   done

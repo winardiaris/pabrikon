@@ -1,21 +1,19 @@
 language: python
 python:
   - "2.7"
-install: sudo apt-get install inkscape
+install: sudo apt-get install inkscape tree
 script: 
   - ls
   - pwd
-  - ls -la ~/
   - mkdir -p ~/.local/bin
-  - chmod +x /home/travis/build/pabrik-ikon/pabrik.py
-  - ln -s /home/travis/build/pabrik-ikon/bin/pabrik.py /home/travis/.local/bin/pabrik
-  - ls /opt/
-  - ln -s /home/travis/build/pabrik-ikon /opt/pabrik-ikon
-  - ls /opt/
-  - cat ~/.bashrc
-  - source ~/.bashrc
+  - ls ~/.local/bin
+  - ln -s /home/travis/build/winardiaris/pabrik-ikon/bin/pabrik.py /home/travis/.local/bin/pabrik
+  - ln -s /home/travis/build/winardiaris/pabrik-ikon /opt/pabrik-ikon
+  - ls ~/.local/bin
+  - ls -la /opt/
+  - ls -la /opt/pabrik-ikon
+  - tree /opt/pabrik-ikon
   - export PATH=$PATH:~/.local/bin
-  - pabrik -h
   - mkdir ~/tmp
   - cd ~/tmp
   - ls

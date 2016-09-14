@@ -1,38 +1,23 @@
 language: python
 python:
   - "2.7"
-install: sudo apt-get install inkscape tree
+install: sudo apt-get install inkscape
 script: 
-  - ls
   - pwd
   - mkdir -p ~/.local/bin
-  - ls ~/.local/bin
   - ln -s /home/travis/build/winardiaris/pabrik-ikon/bin/pabrik.py /home/travis/.local/bin/pabrik
   - ln -s /home/travis/build/winardiaris/pabrik-ikon /opt/pabrik-ikon
-  - ls ~/.local/bin
-  - ls -la /opt/
-  - ls -la /opt/pabrik-ikon
-  - tree /opt/pabrik-ikon
   - export PATH=$PATH:~/.local/bin
   - mkdir ~/tmp
   - cd ~/tmp
-  - ls
   - pabrik --newproject --source=https://github.com/BlankOn/tebu-flat.git
-  - ls
   - cd tebu-flat/Tebu-Flat
-  - pabrik -h
-  - pabrik -l
   - pabrik --makecsv --source=pabrik
   - pabrik -c
   - pabrik -b
   - pabrik --makecsv
   - pabrik -l -t make
-  - pabrik -l -t all
-  - pabrik -l -t png
-  - pabrik -l -t svg
-  - pabrik -l -t symlink
-  - pabrik -c -t symlink
-  - pabrik -l -t symlink
+  - pabrik -c
   - pabrik -s
   - pabrik -l -t symlink
   - pabrik -n --name=aris --directory=apps

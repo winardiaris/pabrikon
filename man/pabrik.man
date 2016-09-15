@@ -62,7 +62,10 @@ OPTION
   --vaccum
     this is for vaccum size svg file with feature from inkscape
 
-  -v, --version
+  -v, --verbose
+    increase verbosity
+
+  --version
     show pabrik-ikon version
 
 

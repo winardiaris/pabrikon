@@ -14,6 +14,7 @@ name = 'default'
 op = ''
 source = 'default'
 types = 'default'
+verbose = False
 
 def pabrik_ikon():
     if op == 'build':
@@ -147,10 +148,14 @@ def make_symlink():
     icon_sizes.append('scalable')
     
     for icon_ in list_dirs:
-        print icon_ + "========================================================================"
+        if verbose:
+            print icon_ + "========================================================================"
+
         if os.path.exists(current_dir + "/" + icon_ ):
             for size_ in icon_sizes:
-                print size_ + "========================================================================"
+                if verbose:
+                    print size_ + "========================================================================"
+                
                 os.chdir(current_dir + "/" + icon_ + "/" + size_)
                 if size_ == "scalable":
                     ext = '.svg'
@@ -165,8 +170,12 @@ def make_symlink():
                     ln_from = c[0].replace('#size#',size_)
                     ln_to = c[1].replace('#size#',size_)
                     if os.path.exists(ln_from + ext):
-                        print 'ln -s ' + ln_from + ext + ' ' + ln_to + ext
-                        os.system('ln -s ' + ln_from + ext + ' ' + ln_to + ext)
+                        if not os.path.exists(ln_to + ext):
+                            os.system('ln -s ' + ln_from + ext + ' ' + ln_to + ext)
+                            if verbose:
+                                print 'ln -s ' + ln_from + ext + ' ' + ln_to + ext
+                        
+                        
 
     print '[success] Making  symlink from data has been finished'
     
@@ -292,9 +301,10 @@ def main(argv):
     global op
     global source
     global types
+    global verbose
     
     try:
-        opts,args = getopt.getopt(argv,"bcd:hlnopst:v",["build","clean","directory=","help","list","makepng","makesym","new","newproject","opencsv","opensvg","makecsv","version","name=","comment=","source=","type="])
+        opts,args = getopt.getopt(argv,"bcd:hlnopst:v",["build","clean","directory=","help","list","makepng","makesym","new","newproject","opencsv","opensvg","makecsv","verbose","version","name=","comment=","source=","type="])
     except getopt.GetoptError:
         help_pabrik()
         sys.exit(2)
@@ -331,7 +341,9 @@ def main(argv):
             source = arg
         elif opt in ('-t','--type'):
             types = arg
-        elif opt in ("-v", "--version"):
+        elif opt in ('-v','--verbose'):
+            verbose = True
+        elif opt in ("--version"):
             op = 'version'
         else:
             print False, "unhandle option"

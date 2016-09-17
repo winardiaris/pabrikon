@@ -9,7 +9,7 @@ icon_sizes = ['16','22','24','32','48','64','96']
 
 
 # Version
-version = '0.2-poean-20160915-002'
+version = '0.2-poean-20160917'
 
 # Log
 log_dir = os.getenv("HOME")+'/.pabrik/'

@@ -1,5 +1,6 @@
 #!/bin/bash
 pwd=$(pwd)
+export verbose="$1"
 
 for target in $(find . -type l | grep scalable)
   do
@@ -34,7 +35,9 @@ for target in $(find . -type l | grep scalable)
       target_replace=${target_replace/.svg/}
        
       echo $source_replace','$target_replace >> data/$dir_target.csv
-      echo $source_replace','$target_replace
+      if [ "$verbose" != "" ]; then
+        echo $source_replace','$target_replace
+      fi
     else
       source_replace=${source/$dir_source\//}
       source_replace=${source_replace/scalable\//}
@@ -46,7 +49,10 @@ for target in $(find . -type l | grep scalable)
       target_replace=${target_replace/.svg/}
       
       echo $source_replace','$target_replace >> data/$dir_target.csv
-      echo $source_replace','$target_replace
+      if [ "$verbose" != "" ]; then
+        echo $source_replace','$target_replace
+      fi
+
     fi
      
   done

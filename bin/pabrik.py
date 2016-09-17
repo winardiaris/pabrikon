@@ -148,7 +148,7 @@ def make_csv_data():
 
 def make_png():
     print '[info] Start export png files'
-    loggin.info("Start export png files")
+    logging.info("Start export png files")
     current_dir=os.getcwd()
     
     for icon_ in list_dirs:

@@ -9,7 +9,9 @@ icon_sizes = ['16','22','24','32','48','64','96']
 
 
 # Version
-version = '0.2-poean-20160915'
+version = '0.2-poean-20160915-002'
 
-# Log directory
-log_dir = '/var/log/pabrik/'
+# Log
+log_dir = os.getenv("HOME")+'/.pabrik/'
+log_file = 'pabrik.log'
+log_format = '[%(levelname)s]\t%(asctime)s %(message)s'

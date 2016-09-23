@@ -156,19 +156,20 @@ def make_png():
             print current_dir + "/" + icon_ + "/scalable"
 
             for size_ in icon_sizes:
-                if os.path.exists(current_dir + "/" + icon_ + "/" + size_ ):
-                    ##disini for berdasarkan file svg
-                    for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
-                        file_ =  files.replace('.svg','')
-
-                        source = current_dir+"/"+icon_+"/scalable/"+file_+".svg"
-                        destination = current_dir+"/"+icon_+"/"+size_+"/"+file_+".png"
-                        width = size_
-                        height = size_
-
-                        # export svg to png
-                        export_png(source,destination,width,height)
+                if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
+                    subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
    
+            for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
+                file_ =  files.replace('.svg','')
+
+                source = current_dir+"/"+icon_+"/scalable/"+file_+".svg"
+                destination = current_dir+"/"+icon_+"/"+size_+"/"+file_+".png"
+                width = size_
+                height = size_
+
+                # export svg to png
+                export_png(source,destination,width,height)
+
     print '[info] Exporting png has been finished'
     logging.info("Exporting png has been finished")
     # how to use
@@ -191,7 +192,10 @@ def make_symlink():
             for size_ in icon_sizes:
                 if verbose:
                     print size_ + "========================================================================"
-                
+                if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
+                    subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
+
+
                 os.chdir(current_dir + "/" + icon_ + "/" + size_)
                 if size_ == "scalable":
                     ext = '.svg'
@@ -387,7 +391,7 @@ def main(argv):
             op = 'help'
         elif opt in ("-l","--list"):
             op = 'list'
-        elif opt == "--makecsv":
+        elif opt == '--makecsv':
             op = 'makecsv'
         elif opt in ('-p','--makepng'):
             op = 'makepng'
@@ -395,9 +399,9 @@ def main(argv):
             op = 'makesym'
         elif opt in ('--name'):
             name = arg
-        elif opt in ("-n","--new"):
+        elif opt in ('-n','--new'):
             op = 'newikon'
-        elif opt in ("--newproject"):
+        elif opt == '--newproject':
             op = 'newproject'
         elif opt == "--opencsv":
             op = 'opencsv'
@@ -409,7 +413,7 @@ def main(argv):
             types = arg
         elif opt in ('-v','--verbose'):
             verbose = True
-        elif opt in ("--version"):
+        elif opt in ('--version'):
             op = 'version'
         else:
             print False, "unhandle option"

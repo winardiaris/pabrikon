@@ -21,3 +21,9 @@ script:
   - pabrik -s
   - pabrik -l -t symlink
   - pabrik -n --name=aris --directory=apps
+  - cd ~/tmp
+  - pabrik --newproject --source=https://github.com/BlankOn/Tebu.git
+  - cd Tebu
+  - pabrik --makecsv
+  - pabrik -c
+  - pabrik -b

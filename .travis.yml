@@ -12,9 +12,9 @@ script:
   - cd ~/tmp
   - pabrik --newproject --source=https://github.com/BlankOn/tebu-flat.git
   - cd tebu-flat/Tebu-Flat
-  - pabrik --makecsv --source=pabrik
+  - pabrik --makecsv
   - pabrik -c
-  - pabrik -b
+  - time pabrik -b
   - pabrik --makecsv
   - pabrik -l -t make
   - pabrik -c
@@ -26,4 +26,4 @@ script:
   - cd Tebu
   - pabrik --makecsv
   - pabrik -c
-  - pabrik -b
+  - time pabrik -b

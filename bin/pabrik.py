@@ -159,16 +159,16 @@ def make_png():
                 if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
                     subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
    
-            for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
-                file_ =  files.replace('.svg','')
+                for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
+                    file_ =  files.replace('.svg','')
 
-                source = current_dir+"/"+icon_+"/scalable/"+file_+".svg"
-                destination = current_dir+"/"+icon_+"/"+size_+"/"+file_+".png"
-                width = size_
-                height = size_
+                    source = current_dir+"/"+icon_+"/scalable/"+file_+".svg"
+                    destination = current_dir+"/"+icon_+"/"+size_+"/"+file_+".png"
+                    width = size_
+                    height = size_
 
-                # export svg to png
-                export_png(source,destination,width,height)
+                    # export svg to png
+                    export_png(source,destination,width,height)
 
     print '[info] Exporting png has been finished'
     logging.info("Exporting png has been finished")

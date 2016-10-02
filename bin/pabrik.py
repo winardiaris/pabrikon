@@ -201,19 +201,21 @@ def make_symlink():
                     ext = '.svg'
                 else:
                     ext = '.png'
+                
 
-                with open(current_dir +'/data/'+ icon_ +'.csv','rb') as f:
-                    reader = csv.reader(f)
-                    csv_list = list(reader)
+                if os.path.exists(current_dir +'/data/'+ icon_ +'.csv'):
+                    with open(current_dir +'/data/'+ icon_ +'.csv','rb') as f:
+                        reader = csv.reader(f)
+                        csv_list = list(reader)
 
-                for c in csv_list:
-                    ln_from = c[0].replace('#size#',size_)
-                    ln_to = c[1].replace('#size#',size_)
-                    if os.path.exists(ln_from + ext):
-                        if not os.path.exists(ln_to + ext):
-                            os.system('ln -s ' + ln_from + ext + ' ' + ln_to + ext)
-                            if verbose:
-                                print 'ln -s ' + ln_from + ext + ' ' + ln_to + ext
+                    for c in csv_list:
+                        ln_from = c[0].replace('#size#',size_)
+                        ln_to = c[1].replace('#size#',size_)
+                        if os.path.exists(ln_from + ext):
+                            if not os.path.exists(ln_to + ext):
+                                os.system('ln -s ' + ln_from + ext + ' ' + ln_to + ext)
+                                if verbose:
+                                    print 'ln -s ' + ln_from + ext + ' ' + ln_to + ext
                         
                         
 

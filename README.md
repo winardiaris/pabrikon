@@ -1,15 +1,16 @@
 # Pabrik-ikon
-Pabrik-Ikon can run on all distributions of GNU / Linux, Pabrik-Ikon is designed to help developers distributions of GNU / Linux, especially on the art team to create and manage an icon created for the typical GNU / Linux distribution developed.
 
-The idea to create a Pabrik-Ikon leveled by Herpiko Dwi Aguno artwork team in BlankOn Project. Pabrik-Ikon is currently only a BASH script, but it is very helpful to manage icons.
+Pabrik-Ikon can run on all GNU/Linux distributions and designed to help GNU/Linux distro developers, especially for the artwork team to create and manage their own icons.
 
-In the future Pabrik-Ikon will be made a GUI-based application with features: a friendly interface, create a new project, import / export projects, one-on-one / many for export png, use Inkscape for editing, managing symlink
+The idea of Pabrik-Ikon was initiated by @herpiko, from artwork team in BlankOn Project. Pabrik-Ikon is currently only a BASH script, but it is very helpful to manage icons.
 
-## Requirement
+## Requirements
+
 - [inkscape](https://inkscape.org/en/)
 - [svgcleaner](https://sourceforge.net/projects/svgcleaner/)
 
 ## Directory structure
+
 In the folder in your working folder requires at least one of the following list:
 
 - actions/scalable/
@@ -22,22 +23,24 @@ In the folder in your working folder requires at least one of the following list
 - mimetypes/scalable/
 - places/scalable/
 - status/scalable/
-- stock/scalable/  
-- data/					<= `this use for place a csv files data for make symlink`
+- stock/scalable/
+- data/					<= `This contains CSV files of symlinks data`
 
-The files `* .svg` stored in the folder` scalable`
+The `* .svg` files will be stored in the `scalable` folder.
 
 ## Installation
+
 ```
-$ curl https://raw.githubusercontent.com/winardiaris/pabrik-ikon/master/install.sh | bash 
+$ curl https://raw.githubusercontent.com/winardiaris/pabrik-ikon/master/install.sh | bash
 ```
 
 ## Help
+
 ```
 PABRIK-IKON(1)    USERMANUAL    PABRIK-IKON(1)
 
 NAME
-    pabrik-ikon 
+    pabrik-ikon
 
 DESCRIPTION
     Pabrik-Ikon can run on all distributions of GNU / Linux,
@@ -49,14 +52,14 @@ OPTION
   -b, --build
     build icon from svg to png
 
-  -c, --clean 
+  -c, --clean
     clean project dir from png files
 
   --comment
     this for comment a new icon project
 
   -d, --directory
-    select the type of directory icon project [ex:apps, categories, places, etc..]    
+    select the type of directory icon project [ex:apps, categories, places, etc..]
 
   -h, --help
     output usage information
@@ -84,17 +87,17 @@ OPTION
 
   --newproject
     this is for make a new project icon could be blank projects or from git url
-  
+
   --opencsv
     this for open csv file on the project or pabrik-ikon default
 
   --source
     this use for source of --makecsv , --newproject , --opencsv
 
-  -t, --types 
-    for --clean {default|png|symlink} 
+  -t, --types
+    for --clean {default|png|symlink}
     for --list {all|png|svg|symlink}
-    
+
   --vaccum
     this is for vaccum size svg file with feature from inkscape
 
@@ -108,13 +111,13 @@ OPTION
 EXAMPLES
   pabrik --build
     build icon from svg to png
-  
+
   pabrik --clean
-    this clean the project from png and symlink file 
+    this clean the project from png and symlink file
 
   pabrik --clean --type=png
     this clean the project from png file
-  
+
   pabrik --clean --type=symlink
     this clean the project from symlink file
 
@@ -123,23 +126,23 @@ EXAMPLES
 
   pabrik -l -t {all|png|svg|symlink}
     show list file in current project
-  
-  pabrik --makecsv     
+
+  pabrik --makecsv
   pabrik --makecsv --source=default
     make csv file from symlink in current project
-  
+
   pabrik -s
   pabrik --makesym
     build symbolic link file from csv file in data directory
-    
-  
+
+
   pabrik --makecsv --source=pabrik
     copy csv file from pabrik-ikon default to current project
 
   pabrik -p
   pabrik --makepng
     build icons in png file
-   
+
   pabrik -n --name=NAME.svg --directory=places
   pabrik --new --name=NAME.svg --directory=places
     this is for copy default icon svg file to <directory>/scalable/<name>
@@ -150,8 +153,8 @@ EXAMPLES
   pabrik --newproject --source=git-url-of-icon-project.git
     this make new project with source from git url
 
-  pabrik --opencsv --name=apps 
-    this open csv file with name apps.csv in current icon project 
+  pabrik --opencsv --name=apps
+    this open csv file with name apps.csv in current icon project
 
   pabrik --opencsv --name=places --source=pabrik
     this open csv file with name places.csv in pabrik-ikon default data
@@ -159,3 +162,6 @@ EXAMPLES
 
 ```
 
+# TODO
+
+In the future Pabrik-Ikon will be extended to a GUI-based application with more features : a friendly interface to create a new project, import / export projects, one-on-one / many for export png, use Inkscape for editing, managing symlink and so on.

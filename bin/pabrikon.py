@@ -42,7 +42,7 @@ def pabrikon():
     elif op == 'opensvg':
         open_svg()
     elif op == 'version':
-        version_pabrikonon()
+        version_pabrikon()
     else:
         help_pabrikon()
 
@@ -353,7 +353,7 @@ def vaccum_svg():
     # pabrikon --vaccum
 
 
-def version_pabrikonon():
+def version_pabrikon():
     print 'pabrikon version:' + version
 
     # how to use

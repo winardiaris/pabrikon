@@ -1,6 +1,6 @@
-# Pabrik-ikon
+# Pabrikon
 
-Pabrik-Ikon can run on all GNU/Linux distributions and designed to help GNU/Linux distro developers, especially for the artwork team to create and manage their own icons.
+Pabrikon can run on all GNU/Linux distributions and designed to help GNU/Linux distro developers, especially for the artwork team to create and manage their own icons.
 
 The idea of Pabrik-Ikon was initiated by @herpiko, from artwork team in BlankOn Project. Pabrik-Ikon is currently only a BASH script, but it is very helpful to manage icons.
 
@@ -37,16 +37,15 @@ $ curl https://raw.githubusercontent.com/winardiaris/pabrikon/master/install.sh 
 ## Help
 
 ```
-PABRIK-IKON(1)    USERMANUAL    PABRIK-IKON(1)
+PABRIKON(1)    USERMANUAL    PABRIKON(1)
 
 NAME
     pabrikon
 
 DESCRIPTION
-    Pabrik-Ikon can run on all distributions of GNU / Linux,
-    Pabrik-Ikon is designed to help developers distributions of GNU / Linux,
-    especially on the art team to create and manage an icon created for
-    the typical GNU / Linux distribution developed.
+    Pabrikon can run on all GNU/Linux distributions and designed
+    to help GNU/Linux distro developers, especially for the artwork team
+    to create and manage their own icons.
 
 OPTION
   -b, --build

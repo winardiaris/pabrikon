@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 
-execfile('/opt/pabrik-ikon/config/config.py')
+execfile('/opt/pabrikon/config/config.py')
 
 comment = 'default comment'
 directory = ''
@@ -18,13 +18,13 @@ source = 'default'
 types = 'default'
 verbose = False
 
-def pabrik_ikon():
+def pabrikon():
     if op == 'build':
         build()
     elif op == 'cleanproject':
         clean_project()
     elif op =='help':
-        help_pabrik()
+        help_pabrikon()
     elif op == 'list':
         list_data()
     elif op == 'makecsv':
@@ -42,9 +42,9 @@ def pabrik_ikon():
     elif op == 'opensvg':
         open_svg()
     elif op == 'version':
-        version_pabrik_ikon()
+        version_pabrikon()
     else:
-        help_pabrik()
+        help_pabrikon()
 
 
 
@@ -58,8 +58,8 @@ def build():
     logging.info("Building icons has been finished")
 
     # how to use
-    # pabrik --build
-    # pabrik -b
+    # pabrikon --build
+    # pabrikon -b
 
 def clean_project():
     print '[info] Start clean project'
@@ -86,41 +86,41 @@ def clean_project():
     logging.info("Cleaning project has been finished with type ["+types+"]")
 
     # how to use
-    # pabrik --clean                    <= this clean the project from png and symlink file 
-    # pabrik --clean --type=png         <= this clean the project from png file
-    # pabrik --clean --type=symlink     <= this clean the project from symlink file
+    # pabrikon --clean 
+    # pabrikon --clean --type=png
+    # pabrikon --clean --type=symlink
 
 def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
-def help_pabrik():
-    os.system('cat /opt/pabrik-ikon/man/pabrik.man')
+def help_pabrikon():
+    os.system('cat /opt/pabrikon/man/pabrikon.man')
 
     # how to use
-    # pabrik -h
-    # pabrik --help
+    # pabrikon -h
+    # pabrikon --help
 def list_data():
     print '[info] List data'
     logging.info("List data")
     if types:
         if types != 'default':
-            os.system('/opt/pabrik-ikon/bin/list.sh ' + types + ' ')
+            os.system('/opt/pabrikon/bin/list.sh ' + types + ' ')
         else:
-            os.system('/opt/pabrik-ikon/bin/list.sh all')
+            os.system('/opt/pabrikon/bin/list.sh all')
     # how to use
-    # pabrik -l
-    # pabrik -l -t {all|png|svg|symlink}
+    # pabrikon -l
+    # pabrikon -l -t {all|png|svg|symlink}
 
 def make_csv_data():
-    if source == 'pabrik':
-        # copy csv file from pabrik-ikon default to current project directory
+    if source == 'pabrikon':
+        # copy csv file from pabrikon default to current project directory
         print '[info] Start copying csv file to current project'
         logging.info("Start copying csv file to current project")
         
         if verbose:
-            os.system('cp -rv /opt/pabrik-ikon/data .')
+            os.system('cp -rv /opt/pabrikon/data .')
         else:
-            os.system('cp -r /opt/pabrik-ikon/data .')
+            os.system('cp -r /opt/pabrikon/data .')
 
         print '[info] Copying csv file has been finished'
         logging.info("Copying csv file has been finished")
@@ -130,21 +130,21 @@ def make_csv_data():
         logging.info("Start make csv file from symlink in current project")
         
         if verbose:
-            os.system('/opt/pabrik-ikon/bin/makecsv.sh v')
+            os.system('/opt/pabrikon/bin/makecsv.sh v')
         else:
-            os.system('/opt/pabrik-ikon/bin/makecsv.sh')
+            os.system('/opt/pabrikon/bin/makecsv.sh')
 
         print '[info] Csv file creation has been finished'
         logging.info("Csv file creation has been finished")
     else:
-        print '[error] put --source=pabrik for make csv file from pabrik-ikon default' 
+        print '[error] put --source=pabrikon for make csv file from pabrikon default' 
         print '[error] put --source=default for make csv file from symlink file' 
-        logging.error("make_csv_data source not in (pabrik|default)")
+        logging.error("make_csv_data source not in (pabrikon|default)")
 
     # how to use
-    # pabrik --makecsv     
-    # pabrik --makecsv --source=default
-    # pabrik --makecsv --source=pabrik
+    # pabrikon --makecsv     
+    # pabrikon --makecsv --source=default
+    # pabrikon --makecsv --source=pabrik
 
 def make_png():
     print '[info] Start export png files'
@@ -173,10 +173,14 @@ def make_png():
     print '[info] Exporting png has been finished'
     logging.info("Exporting png has been finished")
     # how to use
-    # pabrik --makepng
+    # pabrikon --makepng
 
 def export_png(source,destination,width,height):
-    os.system("inkscape "+source+" --export-png="+destination+" --export-height="+height+" --export-width="+width)
+    logging.info("Exporting "+source+" to "+destination)
+    if verbose:
+        os.system("inkscape "+source+" --export-png="+destination+" --export-height="+height+" --export-width="+width)
+    else:
+        os.system("inkscape "+source+" --export-png="+destination+" --export-height="+height+" --export-width="+width+" >> "+log_dir+log_file )
 
 def make_symlink():
     print '[info] Start make symbolic link from data'
@@ -223,35 +227,35 @@ def make_symlink():
     logging.info("Making symlink from data has been finished")
     
     # how to use
-    # pabrik --makesym
+    # pabrikon --makesym
 
 def minizer_svg():
     # this is for reduce the size of svg file
     #not finished
     print 'minizer'
     # how to use
-    # pabrik --minizer
+    # pabrikon --minizer
 
 def new_ikon():
     # this is for copy default default.svg to spesific 
     print '[info]: make new icon ' + directory + '/scalable/' + name + '.svg'
     logging.info('make new icon ' + directory + '/scalable/' + name + '.svg')
-    os.system("cp -rv /opt/pabrik-ikon/data/default.svg ./"+directory+"/scalable/"+name+".svg")
+    os.system("cp -rv /opt/pabrikon/data/default.svg ./"+directory+"/scalable/"+name+".svg")
 
 
     # how to use
-    # pabrik --new --name=nameoficon --directory=categories
+    # pabrikon --new --name=nameoficon --directory=categories
 
 def new_project():
     if not name == "default":
         if not os.path.exists(name):
-            print '[info] Start make new project \nName=' + name + "\nComment=" + comment  # print new icon name and description 
+            print '[info] Start make new project \nName=' + name + "\nComment=" + comment
             logging.info("start make new project Name="+name+", Comment="+comment)
             
             subprocess.check_output(['mkdir', '-p', name ])
             logging.debug("making new project with name="+name)
 
-            os.system('cp -r /opt/pabrik-ikon/data ' + name)
+            os.system('cp -r /opt/pabrikon/data ' + name)
             os.system('mv ./' + name + '/data/index.theme ' + name + '/index.theme')
             os.system('sed -i "s/ICONNAME/' + name  + '/g" ' + name + '/index.theme') 
             os.system('sed -i "s/COMMENT/' + comment  + '/g" ' + name + '/index.theme') 
@@ -280,16 +284,17 @@ def new_project():
             print '[error] its not valid git url'
             logging.error('its not valid git url')
     else:
-        help_pabrik()
+        help_pabrikon()
 
     # how to use
-    # pabrik --newproject --name=NAME --comment="This Comment for icon" <= this make new project with empty icon with defauls csv data for make symlink
-    # pabrik --newproject --source=GIT_URI                              <= this make new project with source from git uri
-
+    # this make new project with empty icon with defauls csv data for make symlink
+    # pabrikon --newproject --name=NAME --comment="This Comment for icon"
+    # this make new project with source from git uri
+    # pabrikon --newproject --source=GIT_URL
 def open_csv():
     if name:
-        if source == 'pabrik':
-            dirs = '/opt/pabrik-ikon'
+        if source == 'pabrikon':
+            dirs = '/opt/pabrikon'
         else:
             dirs = '.'
             
@@ -301,12 +306,12 @@ def open_csv():
                 os.system(csv_editor +' '+ dirs + '/data/' + name + '.csv')
             else:
                 print '[error] please put the name of csv in data directory'
-                print '[info]: $ pabrik --opencsv --name=apps'
+                print '[info]: $ pabrikon --opencsv --name=apps'
 
                 logging.error(dirs + '/data/' + name + '.csv : no such file directory')
     else:
         print '[error] please put the name of csv in data directory'
-        print '[example]: $ pabrik --opencsv --name=apps'
+        print '[example]: $ pabrikon --opencsv --name=apps'
         os.system('ls '+dirs+'/data | grep csv | sed \'s/.csv//\' ')
         logging.error(dirs + '/data/' + name + '.csv : no such file directory')
 
@@ -315,8 +320,9 @@ def open_csv():
 
 
     # how to use
-    # pabrik --opencsv --name=NAME.csv 
-    # pabrik --opencsv --name=NAME.csv --source=pabrik      <= this open default csv file from pabrik-ikon
+    # pabrikon --opencsv --name=NAME.csv 
+    # this open default csv file from pabrikon
+    # pabrikon --opencsv --name=NAME.csv --source=pabrikon
 
 def open_svg():
     if not name == "default":
@@ -331,28 +337,28 @@ def open_svg():
         else:
             os.system("find . -name '"+name+".svg' -exec inkscape {} \;")
     else:
-        help_pabrik()
+        help_pabrikon()
     
     print '[info] Open svg file has been finished'
     logging.info('Open svg file has been finished')
     
     # how to use
-    # pabrik --open --name inkscape --directory apps
+    # pabrikon --open --name inkscape --directory apps
 
 def vaccum_svg():
     # this is for vaccum size  svg file with inkscape
     print '[vaccum_svg]' #not finished
 
     # how to use
-    # pabrik --vaccum
+    # pabrikon --vaccum
 
 
-def version_pabrik_ikon():
-    print 'pabrik-ikon version:' + version
+def version_pabrikon():
+    print 'pabrikon version:' + version
 
     # how to use
-    # pabrik -v
-    # pabrik --version
+    # pabrikon -v
+    # pabrikon --version
 
 
 
@@ -378,7 +384,7 @@ def main(argv):
     try:
         opts,args = getopt.getopt(argv,"bcd:hlnopst:v",["build","clean","directory=","help","list","makepng","makesym","new","newproject","opencsv","opensvg","makecsv","verbose","version","name=","comment=","source=","type="])
     except getopt.GetoptError:
-        help_pabrik()
+        help_pabrikon()
         sys.exit(2)
     for opt, arg in opts:
         if opt in ('-b','--build'):
@@ -420,7 +426,7 @@ def main(argv):
         else:
             print False, "unhandle option"
  
-    pabrik_ikon()
+    pabrikon()
 
 if __name__ == "__main__":
     main(sys.argv[1:])

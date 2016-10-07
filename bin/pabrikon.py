@@ -176,7 +176,11 @@ def make_png():
     # pabrikon --makepng
 
 def export_png(source,destination,width,height):
-    os.system("inkscape "+source+" --export-png="+destination+" --export-height="+height+" --export-width="+width)
+    logging.info("Exporting "+source+" to "+destination)
+    if verbose:
+        os.system("inkscape "+source+" --export-png="+destination+" --export-height="+height+" --export-width="+width)
+    else:
+        os.system("inkscape "+source+" --export-png="+destination+" --export-height="+height+" --export-width="+width+" >> "+log_dir+log_file )
 
 def make_symlink():
     print '[info] Start make symbolic link from data'

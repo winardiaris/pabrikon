@@ -5,25 +5,25 @@ install: sudo apt-get install inkscape
 script: 
   - pwd
   - mkdir -p ~/.local/bin
-  - ln -s /home/travis/build/winardiaris/pabrik-ikon/bin/pabrik.py /home/travis/.local/bin/pabrik
-  - ln -s /home/travis/build/winardiaris/pabrik-ikon /opt/pabrik-ikon
+  - ln -s /home/travis/build/winardiaris/pabrikon/bin/pabrikon.py /home/travis/.local/bin/pabrikon
+  - ln -s /home/travis/build/winardiaris/pabrikon /opt/pabrikon
   - export PATH=$PATH:~/.local/bin
   - mkdir ~/tmp
   - cd ~/tmp
-  - pabrik --newproject --source=https://github.com/BlankOn/tebu-flat.git
+  - pabrikon --newproject --source=https://github.com/BlankOn/tebu-flat.git
   - cd tebu-flat/Tebu-Flat
-  - pabrik --makecsv
-  - pabrik -c
-  - time pabrik -b
-  - pabrik --makecsv
-  - pabrik -l -t make
-  - pabrik -c
-  - pabrik -s
-  - pabrik -l -t symlink
-  - pabrik -n --name=aris --directory=apps
+  - pabrikon --makecsv
+  - pabrikon -c
+  - time pabrikon -b
+  - pabrikon --makecsv
+  - pabrikon -l -t make
+  - pabrikon -c
+  - pabrikon -s
+  - pabrikon -l -t symlink
+  - pabrikon -n --name=aris --directory=apps
   - cd ~/tmp
-  - pabrik --newproject --source=https://github.com/BlankOn/Tebu.git
+  - pabrikon --newproject --source=https://github.com/BlankOn/Tebu.git
   - cd Tebu
-  - pabrik --makecsv
-  - pabrik -c
-  - time pabrik -b
+  - pabrikon --makecsv
+  - pabrikon -c
+  - time pabrikon -b

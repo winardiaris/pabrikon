@@ -1,9 +1,9 @@
 #!/bin/bash
 
 cd /tmp
-wget https://github.com/winardiaris/pabrik-ikon/archive/master.zip
+wget https://github.com/winardiaris/pabrikon/archive/master.zip
 unzip master.zip
-sudo mv pabrik-ikon-master /opt/pabrik-ikon
-sudo ln -s /opt/pabrik-ikon/bin/pabrik.py /usr/local/bin/pabrik
+sudo mv pabrikon-master /opt/pabrikon
+sudo ln -s /opt/pabrikon/bin/pabrik.py /usr/local/bin/pabrikon
 echo "[info] instalation complete"
-echo "type 'pabrik -h' for help the pabrik-ikon "
+echo "type 'pabrikon -h' for help the pabrikon "

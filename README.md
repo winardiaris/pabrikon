@@ -31,7 +31,7 @@ The `* .svg` files will be stored in the `scalable` folder.
 ## Installation
 
 ```
-$ curl https://raw.githubusercontent.com/winardiaris/pabrik-ikon/master/install.sh | bash
+$ curl https://raw.githubusercontent.com/winardiaris/pabrikon/master/install.sh | bash
 ```
 
 ## Help
@@ -40,7 +40,7 @@ $ curl https://raw.githubusercontent.com/winardiaris/pabrik-ikon/master/install.
 PABRIK-IKON(1)    USERMANUAL    PABRIK-IKON(1)
 
 NAME
-    pabrik-ikon
+    pabrikon
 
 DESCRIPTION
     Pabrik-Ikon can run on all distributions of GNU / Linux,
@@ -68,7 +68,7 @@ OPTION
     list file in current project
 
   --makecsv
-    make csv file for icon project from symlink or pabrik-ikon default
+    make csv file for icon project from symlink or pabrikon default
 
   -p,--makepng
     build icons in png file
@@ -89,7 +89,7 @@ OPTION
     this is for make a new project icon could be blank projects or from git url
 
   --opencsv
-    this for open csv file on the project or pabrik-ikon default
+    this for open csv file on the project or pabrikon default
 
   --source
     this use for source of --makecsv , --newproject , --opencsv
@@ -105,59 +105,59 @@ OPTION
     increase verbosity
 
   --version
-    show pabrik-ikon version
+    show pabrikon version
 
 
 EXAMPLES
-  pabrik --build
+  pabrikon --build
     build icon from svg to png
 
-  pabrik --clean
+  pabrikon --clean
     this clean the project from png and symlink file
 
-  pabrik --clean --type=png
+  pabrikon --clean --type=png
     this clean the project from png file
 
-  pabrik --clean --type=symlink
+  pabrikon --clean --type=symlink
     this clean the project from symlink file
 
-  pabrik -h
+  pabrikon -h
     show this help usage
 
-  pabrik -l -t {all|png|svg|symlink}
+  pabrikon -l -t {all|png|svg|symlink}
     show list file in current project
 
-  pabrik --makecsv
-  pabrik --makecsv --source=default
+  pabrikon --makecsv
+  pabrikon --makecsv --source=default
     make csv file from symlink in current project
 
-  pabrik -s
-  pabrik --makesym
+  pabrikon -s
+  pabrikon --makesym
     build symbolic link file from csv file in data directory
 
 
-  pabrik --makecsv --source=pabrik
-    copy csv file from pabrik-ikon default to current project
+  pabrikon --makecsv --source=pabrikon
+    copy csv file from pabrikon default to current project
 
-  pabrik -p
-  pabrik --makepng
+  pabrikon -p
+  pabrikon --makepng
     build icons in png file
 
-  pabrik -n --name=NAME.svg --directory=places
-  pabrik --new --name=NAME.svg --directory=places
+  pabrikon -n --name=NAME.svg --directory=places
+  pabrikon --new --name=NAME.svg --directory=places
     this is for copy default icon svg file to <directory>/scalable/<name>
 
-  pabrik --newproject --name=NAME --comment="comment or description for this icon "
+  pabrikon --newproject --name=NAME --comment="comment or description for this icon "
     this is make new blank project with <name> of icon
 
-  pabrik --newproject --source=git-url-of-icon-project.git
+  pabrikon --newproject --source=git-url-of-icon-project.git
     this make new project with source from git url
 
-  pabrik --opencsv --name=apps
+  pabrikon --opencsv --name=apps
     this open csv file with name apps.csv in current icon project
 
-  pabrik --opencsv --name=places --source=pabrik
-    this open csv file with name places.csv in pabrik-ikon default data
+  pabrikon --opencsv --name=places --source=pabrikon
+    this open csv file with name places.csv in pabrikon default data
 
 
 ```

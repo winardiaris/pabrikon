@@ -1,4 +1,4 @@
-# Pabrikon
+# Pabrikon [![Build Status](https://travis-ci.org/winardiaris/pabrikon.svg?branch=master)](https://travis-ci.org/winardiaris/pabrikon)
 
 Pabrikon can run on all GNU/Linux distributions and designed to help GNU/Linux distro developers, especially for the artwork team to create and manage their own icons.
 

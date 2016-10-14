@@ -76,29 +76,29 @@ OPTION
     build symbolic link file from csv file in data directory
 
   --minizer
-    this is for reduce the size of svg file
+    reduce the size of svg file
 
   --name
-    this is for naming a new project or name a new icon
+    naming a new project or name a new icon
 
   --new
-    this is for copy default icon svg file to new icon
+    copy default icon svg file to new icon
 
   --newproject
-    this is for make a new project icon could be blank projects or from git url
+    make a new project icon could be blank projects or from git url
 
   --opencsv
-    this for open csv file on the project or pabrikon default
+    open csv file on the project or pabrikon default
 
   --source
-    this use for source of --makecsv , --newproject , --opencsv
+    source of --makecsv , --newproject , --opencsv
 
   -t, --types
     for --clean {default|png|symlink}
     for --list {all|png|svg|symlink}
 
   --vaccum
-    this is for vaccum size svg file with feature from inkscape
+    vaccum size svg file with feature from Inkscape
 
   -v, --verbose
     increase verbosity
@@ -112,13 +112,13 @@ EXAMPLES
     build icon from svg to png
 
   pabrikon --clean
-    this clean the project from png and symlink file
+    clean the project from png and symlink file
 
   pabrikon --clean --type=png
-    this clean the project from png file
+    clean the project from png file
 
   pabrikon --clean --type=symlink
-    this clean the project from symlink file
+    clean the project from symlink file
 
   pabrikon -h
     show this help usage
@@ -144,25 +144,23 @@ EXAMPLES
 
   pabrikon -n --name=NAME.svg --directory=places
   pabrikon --new --name=NAME.svg --directory=places
-    this is for copy default icon svg file to <directory>/scalable/<name>
+    copy default icon svg file to <directory>/scalable/<name>
 
   pabrikon --newproject --name=NAME --comment="comment or description for this icon "
-    this is make new blank project with <name> of icon
+    make new blank project with <name> of icon
 
   pabrikon --newproject --source=git-url-of-icon-project.git
-    this make new project with source from git url
+    make new project with source from git url
 
   pabrikon --opencsv --name=apps
-    this open csv file with name apps.csv in current icon project
+    open csv file with name apps.csv in current icon project
 
   pabrikon --opencsv --name=places --source=pabrikon
-    this open csv file with name places.csv in pabrikon default data
+    open csv file with name places.csv in pabrikon default data
 
 
 ```
 
 # TODO
 
-In the future Pabrik-Ikon will be extended to a GUI-based application with more features : a friendly interface to create a new project, import / export projects, one-on-one / many for export png, use Inkscape for editing, managing symlink and so on.
-
-tambah sesuatu
+In the future Pabrik-Ikon will be extended to a GUI-based application with more features: a friendly interface to create a new project, import/export projects, one-on-one/many for export png, use Inkscape for editing, managing symlink, and so on.

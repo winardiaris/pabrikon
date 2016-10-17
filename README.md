@@ -2,7 +2,7 @@
 
 Pabrikon can be run in all GNU/Linux distributions and designed to help GNU/Linux distro developers, especially for the artwork team to create and manage their own icons.
 
-The idea of Pabrik-Ikon was initiated by @herpiko, from artwork team in BlankOn Project. Currently, Pabrik-Ikon only a bash script but this will be very helpful to manage icons.
+The idea of Pabrikon was initiated by @herpiko, from artwork team in BlankOn Project. Currently, Pabrikon only a bash script but this will be very helpful to manage icons.
 
 ## Requirements
 
@@ -163,4 +163,4 @@ EXAMPLES
 
 # TODO it
 
-In the future, Pabrik-Ikon will be extended to a GUI-based application with more features: a friendly interface to create a new project, import/export projects, one-on-one/many for export png, use Inkscape for editing, managing symlink, and many more.
+In the future, Pabrikon will be extended to a GUI-based application with more features: a friendly interface to create a new project, import/export projects, one-on-one/many for export png, use Inkscape for editing, managing symlink, and many more.

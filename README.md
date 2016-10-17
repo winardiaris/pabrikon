@@ -97,6 +97,9 @@ OPTION
     for --clean {default|png|symlink}
     for --list {all|png|svg|symlink}
 
+  -u, --update
+    update pabrikon
+
   --vaccum
     vaccum size svg file with feature from Inkscape
 
@@ -133,7 +136,6 @@ EXAMPLES
   pabrikon -s
   pabrikon --makesym
     build symbolic link file from csv file in data directory
-
 
   pabrikon --makecsv --source=pabrikon
     copy csv file from pabrikon default to current project

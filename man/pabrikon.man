@@ -1,25 +1,25 @@
 PABRIKON(1)    USERMANUAL    PABRIKON(1)
 
 NAME
-    pabrikon 
+    pabrikon
 
 DESCRIPTION
-    Pabrikon can run on all GNU/Linux distributions and designed 
-    to help GNU/Linux distro developers, especially for the artwork team 
-    to create and manage their own icons.  
+    Pabrikon can run on all GNU/Linux distributions and designed
+    to help GNU/Linux distro developers, especially for the artwork team
+    to create and manage their own icons.
 
 OPTION
   -b, --build
     build icon from svg to png
 
-  -c, --clean 
+  -c, --clean
     clean project dir from png files
 
   --comment
     this for comment a new icon project
 
   -d, --directory
-    select the type of directory icon project [ex:apps, categories, places, etc..]    
+    select the type of directory icon project [ex:apps, categories, places, etc..]
 
   -h, --help
     output usage information
@@ -37,29 +37,32 @@ OPTION
     build symbolic link file from csv file in data directory
 
   --minizer
-    this is for reduce the size of svg file
+    reduce the size of svg file
 
   --name
-    this is for naming a new project or name a new icon
+    naming a new project or name a new icon
 
   --new
-    this is for copy default icon svg file to new icon
+    copy default icon svg file to new icon
 
   --newproject
-    this is for make a new project icon could be blank projects or from git url
-  
+    make a new project icon could be blank projects or from git url
+
   --opencsv
-    this for open csv file on the project or pabrikon default
+    open csv file on the project or pabrikon default
 
   --source
-    this use for source of --makecsv , --newproject , --opencsv
+    source of --makecsv , --newproject , --opencsv
 
-  -t, --types 
-    for --clean {default|png|symlink} 
+  -t, --types
+    for --clean {default|png|symlink}
     for --list {all|png|svg|symlink}
-    
+
+  -u, --update
+    update pabrikon
+
   --vaccum
-    this is for vaccum size svg file with feature from inkscape
+    vaccum size svg file with feature from Inkscape
 
   -v, --verbose
     increase verbosity
@@ -71,50 +74,49 @@ OPTION
 EXAMPLES
   pabrikon --build
     build icon from svg to png
-  
+
   pabrikon --clean
-    this clean the project from png and symlink file 
+    clean the project from png and symlink file
 
   pabrikon --clean --type=png
-    this clean the project from png file
-  
+    clean the project from png file
+
   pabrikon --clean --type=symlink
-    this clean the project from symlink file
+    clean the project from symlink file
 
   pabrikon -h
     show this help usage
 
   pabrikon -l -t {all|png|svg|symlink}
     show list file in current project
-  
-  pabrikon --makecsv     
+
+  pabrikon --makecsv
   pabrikon --makecsv --source=default
     make csv file from symlink in current project
-  
+
   pabrikon -s
   pabrikon --makesym
     build symbolic link file from csv file in data directory
-    
-  
+
   pabrikon --makecsv --source=pabrikon
     copy csv file from pabrikon default to current project
 
   pabrikon -p
   pabrikon --makepng
     build icons in png file
-   
+
   pabrikon -n --name=NAME.svg --directory=places
   pabrikon --new --name=NAME.svg --directory=places
-    this is for copy default icon svg file to <directory>/scalable/<name>
+    copy default icon svg file to <directory>/scalable/<name>
 
   pabrikon --newproject --name=NAME --comment="comment or description for this icon "
-    this is make new blank project with <name> of icon
+    make new blank project with <name> of icon
 
   pabrikon --newproject --source=git-url-of-icon-project.git
-    this make new project with source from git url
+    make new project with source from git url
 
-  pabrikon --opencsv --name=apps 
-    this open csv file with name apps.csv in current icon project 
+  pabrikon --opencsv --name=apps
+    open csv file with name apps.csv in current icon project
 
   pabrikon --opencsv --name=places --source=pabrikon
-    this open csv file with name places.csv in pabrikon default data
+    open csv file with name places.csv in pabrikon default data

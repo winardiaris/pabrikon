@@ -41,6 +41,8 @@ def pabrikon():
         open_csv()
     elif op == 'opensvg':
         open_svg()
+    elif op == 'update':
+        update()
     elif op == 'version':
         version_pabrikon()
     else:
@@ -345,6 +347,14 @@ def open_svg():
     # how to use
     # pabrikon --open --name inkscape --directory apps
 
+def update():
+    # for update pabrikon
+    os.system('cd /opt/pabrikon/ && git pull')
+    
+    print '[info] update pabrikon has been finished'
+    logging.info('update pabrikon has been finished')
+
+
 def vaccum_svg():
     # this is for vaccum size  svg file with inkscape
     print '[vaccum_svg]' #not finished
@@ -382,7 +392,7 @@ def main(argv):
         format=log_format)
 
     try:
-        opts,args = getopt.getopt(argv,"bcd:hlnopst:v",["build","clean","directory=","help","list","makepng","makesym","new","newproject","opencsv","opensvg","makecsv","verbose","version","name=","comment=","source=","type="])
+        opts,args = getopt.getopt(argv,"bcd:hlnopst:uv",["build","clean","directory=","help","list","makepng","makesym","new","newproject","opencsv","opensvg","makecsv","update","verbose","version","name=","comment=","source=","type="])
     except getopt.GetoptError:
         help_pabrikon()
         sys.exit(2)
@@ -419,6 +429,8 @@ def main(argv):
             source = arg
         elif opt in ('-t','--type'):
             types = arg
+        elif opt in ('-u','--update'):
+            op = 'update'
         elif opt in ('-v','--verbose'):
             verbose = True
         elif opt in ('--version'):

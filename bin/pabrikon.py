@@ -349,7 +349,7 @@ def open_svg():
 
 def update():
     # for update pabrikon
-    os.system('cd /opt/pabrikon/ && git pull')
+    os.system('cd /opt/pabrikon/ && sudo  git pull')
     
     print '[info] update pabrikon has been finished'
     logging.info('update pabrikon has been finished')

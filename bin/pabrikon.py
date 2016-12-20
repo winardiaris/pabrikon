@@ -26,6 +26,10 @@ def pabrikon():
         make_csv_data()
     elif op == 'newproject':
         new_project()
+    elif op == 'version':
+        version_pabrikon()
+    elif op == 'update':
+        update()
     else:
         if os.path.exists(current_dir + "/data" ):
             if op == 'build':
@@ -46,10 +50,6 @@ def pabrikon():
                 open_csv()
             elif op == 'opensvg':
                 open_svg()
-            elif op == 'update':
-                update()
-            elif op == 'version':
-                version_pabrikon()
             else:
                 help_pabrikon()
         else:

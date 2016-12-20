@@ -24,6 +24,8 @@ def pabrikon():
         help_pabrikon()
     elif op == 'makecsv':
         make_csv_data()
+    elif op == 'newproject':
+        new_project()
     else:
         if os.path.exists(current_dir + "/data" ):
             if op == 'build':
@@ -40,8 +42,6 @@ def pabrikon():
                 make_svg()
             elif op == 'newikon':
                 new_ikon()
-            elif op == 'newproject':
-                new_project()
             elif op == 'opencsv':
                 open_csv()
             elif op == 'opensvg':

@@ -14,11 +14,11 @@ script:
   - cd tebu-flat/Tebu-Flat
   - pabrikon --makecsv
   - pabrikon -c
-  - time pabrikon -b
+  - time pabrikon -b -t svg
   - pabrikon --makecsv
   - cd ~/tmp
   - pabrikon --newproject --source=https://github.com/BlankOn/Tebu.git
   - cd Tebu
   - pabrikon --makecsv
   - pabrikon -c
-  - time pabrikon -b
+  - time pabrikon -b -t svg

@@ -9,9 +9,9 @@ icon_sizes = ['16','22','24','32','48','64','96','128']
 
 
 # Version
-version = '0.2-poean-20161007'
+version = '0.2-poean-20161220'
 
 # Log
-log_dir = os.getenv("HOME")+'/.pabrikon/'
+log_dir = os.getenv("HOME")+'/.logs/'
 log_file = 'pabrikon.log'
 log_format = '[%(levelname)s]\t%(asctime)s %(message)s'

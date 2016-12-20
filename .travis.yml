@@ -1,7 +1,7 @@
 language: python
 python:
   - "2.7"
-install: sudo apt-get install inkscape
+install: sudo apt-get install inkscape librsvg2-bin
 script: 
   - pwd
   - mkdir -p ~/.local/bin
@@ -14,11 +14,11 @@ script:
   - cd tebu-flat/Tebu-Flat
   - pabrikon --makecsv
   - pabrikon -c
-  - time pabrikon -b
+  - time pabrikon -b -t svg
   - pabrikon --makecsv
   - cd ~/tmp
   - pabrikon --newproject --source=https://github.com/BlankOn/Tebu.git
   - cd Tebu
   - pabrikon --makecsv
   - pabrikon -c
-  - time pabrikon -b
+  - time pabrikon -b -t svg

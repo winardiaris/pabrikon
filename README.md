@@ -7,6 +7,7 @@ The idea of Pabrikon was initiated by @herpiko, from artwork team in BlankOn Pro
 ## Requirements
 
 - [inkscape](https://inkscape.org/en/)
+- [librsvg2-bin](https://wiki.gnome.org/Projects/LibRsvg)
 - [svgcleaner](https://sourceforge.net/projects/svgcleaner/)
 
 ## Directory structure
@@ -63,6 +64,9 @@ OPTION
   -h, --help
     output usage information
 
+  -g, --makesvg
+    build icons in svg file
+
   -l, --list
     list file in current project
 
@@ -112,16 +116,21 @@ OPTION
 
 EXAMPLES
   pabrikon --build
-    build icon from svg to png
+    build icon to png 
+
+  pabrikon --build --type=svg
 
   pabrikon --clean
-    clean the project from png and symlink file
+    clean the project from png, symlink and svg file
 
   pabrikon --clean --type=png
     clean the project from png file
 
   pabrikon --clean --type=symlink
     clean the project from symlink file
+  
+  pabrikon --clean --type=svg
+    clean the project from svg file
 
   pabrikon -h
     show this help usage
@@ -132,6 +141,9 @@ EXAMPLES
   pabrikon --makecsv
   pabrikon --makecsv --source=default
     make csv file from symlink in current project
+ 
+  pabrikon --makecsv --source=pabrikon
+    copy csv file from default pabrikon to current project
 
   pabrikon -s
   pabrikon --makesym

@@ -1,7 +1,7 @@
 language: python
 python:
   - "2.7"
-install: sudo apt-get install inkscape
+install: sudo apt-get install inkscape librsvg2-bin
 script: 
   - pwd
   - mkdir -p ~/.local/bin

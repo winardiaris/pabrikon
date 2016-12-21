@@ -76,7 +76,7 @@ OPTION
 
 EXAMPLES
   pabrikon --build
-    build icon to png 
+    build icon to png
 
   pabrikon --build --type=svg
 
@@ -88,7 +88,7 @@ EXAMPLES
 
   pabrikon --clean --type=symlink
     clean the project from symlink file
-  
+
   pabrikon --clean --type=svg
     clean the project from svg file
 
@@ -101,7 +101,7 @@ EXAMPLES
   pabrikon --makecsv
   pabrikon --makecsv --source=default
     make csv file from symlink in current project
- 
+
   pabrikon --makecsv --source=pabrikon
     copy csv file from default pabrikon to current project
 

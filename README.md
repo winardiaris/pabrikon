@@ -1,8 +1,12 @@
 # Pabrikon [![Build Status](https://travis-ci.org/winardiaris/pabrikon.svg?branch=master)](https://travis-ci.org/winardiaris/pabrikon)
 
-Pabrikon can be run in all GNU/Linux distributions and designed to help GNU/Linux distro developers, especially for the artwork team to create and manage their own icons.
+Pabrikon can be run in all GNU/Linux distributions and designed to help
+GNU/Linux distro developers, especially for the artwork team to create and
+manage their own icons.
 
-The idea of Pabrikon was initiated by @herpiko, from artwork team in BlankOn Project. Currently, Pabrikon only a bash script but this will be very helpful to manage icons.
+The idea of Pabrikon was initiated by @herpiko, from artwork team in
+BlankOn Project. Currently, Pabrikon only a bash script but this will
+be very helpful to manage icons.
 
 ## Requirements
 
@@ -59,7 +63,8 @@ OPTION
     this for comment a new icon project
 
   -d, --directory
-    select the type of directory icon project [ex:apps, categories, places, etc..]
+    select the type of directory icon project [ex:apps, categories, places,
+    etc..]
 
   -h, --help
     output usage information
@@ -116,7 +121,7 @@ OPTION
 
 EXAMPLES
   pabrikon --build
-    build icon to png 
+    build icon to png
 
   pabrikon --build --type=svg
 
@@ -128,7 +133,7 @@ EXAMPLES
 
   pabrikon --clean --type=symlink
     clean the project from symlink file
-  
+
   pabrikon --clean --type=svg
     clean the project from svg file
 
@@ -141,7 +146,7 @@ EXAMPLES
   pabrikon --makecsv
   pabrikon --makecsv --source=default
     make csv file from symlink in current project
- 
+
   pabrikon --makecsv --source=pabrikon
     copy csv file from default pabrikon to current project
 
@@ -160,7 +165,7 @@ EXAMPLES
   pabrikon --new --name=NAME.svg --directory=places
     copy default icon svg file to <directory>/scalable/<name>
 
-  pabrikon --newproject --name=NAME --comment="comment or description for this icon "
+  pabrikon --newproject --name=NAME --comment="comment or description for icon"
     make new blank project with <name> of icon
 
   pabrikon --newproject --source=git-url-of-icon-project.git
@@ -177,4 +182,7 @@ EXAMPLES
 
 # TODO it
 
-In the future, Pabrikon will be extended to a GUI-based application with more features: a friendly interface to create a new project, import/export projects, one-on-one/many for export png, use Inkscape for editing, managing symlink, and many more.
+In the future, Pabrikon will be extended to a GUI-based application with more
+features: a friendly interface to create a new project, import/export projects,
+one-on-one/many for export png, use Inkscape for editing, managing symlink,
+and many more.

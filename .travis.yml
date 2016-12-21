@@ -2,7 +2,7 @@ language: python
 python:
   - "2.7"
 install: sudo apt-get install inkscape librsvg2-bin
-script: 
+script:
   - pwd
   - mkdir -p ~/.local/bin
   - ln -s /home/travis/build/winardiaris/pabrikon/bin/pabrikon.py /home/travis/.local/bin/pabrikon

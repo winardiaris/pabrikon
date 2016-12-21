@@ -7,15 +7,15 @@ for target in $(find . -type l | grep scalable)
     source=`readlink -f $target`
     source=${source/$pwd/.}
 
-    set -- "$target" 
+    set -- "$target"
     IFS="/";declare -a Array1=($*)
     dir_target=${Array1[1]}
 
     set -- "$source"
     IFS="/";declare -a Array2=($*)
     dir_source=${Array2[1]}
-   
-    unset IFS 
+
+    unset IFS
 
     if [ ! -f data/$dir_target.csv  ]
     then
@@ -29,11 +29,11 @@ for target in $(find . -type l | grep scalable)
       source_replace=${source_replace/$dir_source/..\/..\/$dir_source}
       source_replace=${source_replace/scalable/#size#}
       source_replace=${source_replace/.svg/}
-     
-      target_replace=${target/$dir_target\//} 
-      target_replace=${target_replace/scalable\//} 
+
+      target_replace=${target/$dir_target\//}
+      target_replace=${target_replace/scalable\//}
       target_replace=${target_replace/.svg/}
-       
+
       echo $source_replace','$target_replace >> data/$dir_target.csv
       if [ "$verbose" != "" ]; then
         echo $source_replace','$target_replace
@@ -47,13 +47,12 @@ for target in $(find . -type l | grep scalable)
       target_replace=${target/$dir_target\//}
       target_replace=${target_replace/scalable\//}
       target_replace=${target_replace/.svg/}
-      
+
       echo $source_replace','$target_replace >> data/$dir_target.csv
       if [ "$verbose" != "" ]; then
         echo $source_replace','$target_replace
       fi
 
     fi
-     
   done
 

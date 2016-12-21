@@ -36,21 +36,21 @@ function make_data {
   for file in $(find . -name "*.png" -or -name "*.svg")
   do
       FILESIZE="`du -b $file | awk '{print $1}'`"
-      set -- "$file" 
+      set -- "$file"
       IFS="/";declare -a Array1=($*)
       FILENAME=${Array1[-1]}
       DIRECTORY=${Array1[-3]}"/"${Array1[-2]}
-      unset IFS 
+      unset IFS
 
     if [ -f $file ]; then
       if [[ $file == *".svg" ]];then
         TYPE="svg"
       fi
-      
+
       if [[ $file == *".png" ]];then
         TYPE="png"
       fi
-        
+
       SOURCE=""
     fi
 

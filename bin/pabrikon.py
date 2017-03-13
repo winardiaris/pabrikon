@@ -7,9 +7,11 @@ import logging.handlers
 import os
 import subprocess
 import sys
+import time
 
 execfile('/opt/pabrikon/config/config.py')
 
+alls = False
 comment = 'default comment'
 current_dir=os.getcwd()
 directory = ''
@@ -18,6 +20,7 @@ op = ''
 source = 'default'
 types = 'default'
 verbose = False
+last_updated =''
 
 def pabrikon():
     if op =='help':
@@ -57,11 +60,45 @@ def pabrikon():
             ' --makecsv \' for generate csv data'
 
 
+
+def create_last_updated():
+    os.system("rm -rf " + current_dir + "/data/last_updated && echo " + str(time.time()) + " > " + current_dir + "/data/last_updated")
+
+def check_last_updated(i):
+    a = os.path.getmtime(current_dir + "/data/last_updated")
+
+    if i == "":
+        max_mtime = 0
+        for dirname,subdirs,files in os.walk("."):
+            for fname in files:
+                full_path = os.path.join(dirname, fname)
+                mtime = os.stat(full_path).st_mtime
+                if mtime > max_mtime:
+                    max_mtime = mtime
+                    # max_dir = dirname
+                    max_file = full_path
+
+        if max_file != "last_updated":
+
+            b = os.path.getmtime(max_file)
+
+            if b > a:
+                return True
+        else:
+            return False
+    else:
+        b = os.path.getmtime(i)
+        if b > a:
+            return True
+        else:
+            return False
+
+
+
 def build():
     print '[info] Start building icons'
     logging.info("Starting building icons")
-    clean_project()
-
+    # clean_project()
     if types:
         if types == 'svg':
             make_svg()
@@ -78,7 +115,7 @@ def build():
 
 def clean_project():
     print '[info] Start clean project'
-    current_dir=os.getcwd()
+    # current_dir=os.getcwd()
 
     logging.info("Start Clean project")
     logging.debug("current directory: " + current_dir)
@@ -181,6 +218,7 @@ def make_csv_data():
         print '[error] put --source=default for make csv file from ' \
                 'symlink file'
         logging.error("make_csv_data source not in (pabrikon|default)")
+    create_last_updated()
 
     # how to use
     # pabrikon --makecsv
@@ -191,44 +229,43 @@ def make_png():
     print '[info] Start export png files'
     logging.info("Start export png files")
     current_dir=os.getcwd()
+    
+    if cmd_exists("rsvg-convert"):
+        for icon_ in list_dirs:
+            if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):
+                print current_dir + "/" + icon_ + "/scalable"
 
-    for icon_ in list_dirs:
-        if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):
-            if verbose:
-                print "[info]" + current_dir + "/" + icon_ + "/scalable"
-            logging.debug(current_dir + "/" + icon_ + "/scalable")
+                for size_ in icon_sizes:
+                    if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
+                        subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
 
-            for size_ in icon_sizes:
-                if not os.path.exists(current_dir + "/" + icon_ + "/" \
-                        + size_):
-                    subprocess.check_output(['mkdir', '-p',current_dir \
-                            + "/" + icon_ + "/" + size_ ])
+                    for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
+                        file_ =  files.replace('.svg','')
 
-                for files in os.listdir(current_dir + "/" + icon_ + \
-                        "/scalable"):
-                    file_ =  files.replace('.svg','')
+                        source = current_dir + "/" + icon_ + "/scalable/" + file_ + ".svg"
+                        destination = current_dir + "/"+icon_ + "/" + size_ + "/" + file_ + ".png"
+                        width = size_
+                        height = size_
 
-                    source = current_dir + "/" + icon_ + "/scalable/" \
-                            + file_ + ".svg"
-                    destination = current_dir + "/" + icon_ + "/" \
-                            + size_ + "/" + file_ + ".png"
-                    width = size_
-                    height = size_
+                        if alls:
+                            export_png(source,destination,width,height)
+                        else:
+                            if check_last_updated(source):
+                                export_png(source,destination,width,height)
 
-                    # export svg to png
-                    export_png(source,destination,width,height)
 
-    print '[info] Exporting png has been finished'
-    logging.info("Exporting png has been finished")
+        create_last_updated()
+        print '[info] Exporting png has been finished'
+        logging.info("Exporting png has been finished")
+    else:
+        print '[error] please install librsvg2-bin for export to svg'
+        logging.error('please install librsvg2-bin for export to svg')
+
     # how to use
     # pabrikon --makepng
 
 def export_png(source,destination,width,height):
     logging.info("Exporting " + source + " to " + destination)
-    # if verbose:
-    #     os.system("inkscape " + source + " --export-png=" + destination + " --export-height=" + height + " --export-width=" + width)
-    # else:
-    #     os.system("inkscape " + source + " --export-png=" + destination + " --export-height=" + height + " --export-width=" + width + " >> " + log_dir + log_file )
     if verbose:
         os.system("rsvg-convert " + source + " -o " + destination + \
                 " -f png -w " + width + " -h " + height)
@@ -269,7 +306,6 @@ def make_symlink():
                         else:
                             ext = '.png'
 
-
                 if os.path.exists(current_dir  + '/data/' +  \
                         icon_  + '.csv'):
                     with open(current_dir  + '/data/' +  icon_  \
@@ -301,40 +337,40 @@ def make_svg():
     logging.info("Start export svg files")
     current_dir=os.getcwd()
 
-    if cmd_exists("rsvg-convert"):
-        for icon_ in list_dirs:
-            if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):
-                if verbose:
-                    print "[info]" + current_dir + "/" + icon_ \
-                            + "/scalable"
-                logging.debug(current_dir + "/" + icon_ + "/scalable")
+    if check_last_updated(""):
+        if cmd_exists("rsvg-convert"):
+            for icon_ in list_dirs:
+                if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):
+                    print current_dir + "/" + icon_ + "/scalable"
 
-                for size_ in icon_sizes:
-                    if not os.path.exists(current_dir + "/" + icon_ \
-                            + "/" + size_):
-                        subprocess.check_output(['mkdir', '-p',
-                            current_dir + "/" + icon_ + "/" + size_ ])
+                    for size_ in icon_sizes:
+                        if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
+                            subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
 
-                    for files in os.listdir(current_dir + "/" \
-                            + icon_ + "/scalable"):
-                        file_ =  files.replace('.svg','')
+                        for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
+                            file_ =  files.replace('.svg','')
 
-                        source = current_dir + "/" + icon_ \
-                                + "/scalable/" + file_ + ".svg"
-                        destination = current_dir + "/" + icon_ \
-                                + "/" + size_ + "/" + file_ + ".svg"
-                        width = size_
-                        height = size_
+                            source = current_dir + "/" + icon_ + "/scalable/" + file_ + ".svg"
+                            destination = current_dir + "/" + icon_ + "/" + size_ + "/" + file_ + ".svg"
+                            width = size_
+                            height = size_
 
-                        # export to svg with resize
-                        export_svg(source,destination,width,height)
+                            if alls:
+                                export_svg(source,destination,width,height)
+                            else:
+                                if check_last_updated(source):
+                                    export_svg(source,destination,width,height)
 
-        print '[info] Exporting svg has been finished'
-        logging.info("Exporting svg has been finished")
+            create_last_updated()
+            print '[info] Exporting svg has been finished'
+            logging.info("Exporting svg has been finished")
+        else:
+
+            print '[error] please install librsvg2-bin for export to svg'
+            logging.error('please install librsvg2-bin for export to svg')
     else:
-
-        print '[error] please install librsvg2-bin for export to svg'
-        logging.error('please install librsvg2-bin for export to svg')
+        print '[info] No newest files'
+        logging.info("No newest files")
 
     # how to use
     # pabrikon --makesvg
@@ -364,7 +400,6 @@ def new_ikon():
             + name + '.svg')
     os.system("cp -rv /opt/pabrikon/data/default.svg ./" \
             + directory + "/scalable/" + name + ".svg")
-
 
     # how to use
     # pabrikon --new --name=nameoficon --directory=categories
@@ -515,6 +550,7 @@ def version_pabrikon():
     # pabrikon --version
 
 def main(argv):
+    global alls
     global comment
     global directory
     global name
@@ -522,7 +558,6 @@ def main(argv):
     global source
     global types
     global verbose
-
 
     if not os.path.exists(log_dir + log_file):
         os.system("mkdir -p " + log_dir)
@@ -545,6 +580,8 @@ def main(argv):
     for opt, arg in opts:
         if opt in ("-h","--help"):
             op = 'help'
+        elif opt in ('-a','--all'):
+            alls = True
         elif opt in ('-b','--build'):
             op = 'build'
         elif opt in ('-c','--clean'):

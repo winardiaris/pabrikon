@@ -10,7 +10,6 @@ be very helpful to manage icons.
 
 ## Requirements
 
-- [inkscape](https://inkscape.org/en/)
 - [librsvg2-bin](https://wiki.gnome.org/Projects/LibRsvg)
 - [svgcleaner](https://sourceforge.net/projects/svgcleaner/)
 
@@ -53,6 +52,9 @@ DESCRIPTION
     to create and manage their own icons.
 
 OPTION
+  -a, --all
+    force export from all files
+
   -b, --build
     build icon from svg to png
 
@@ -121,7 +123,10 @@ OPTION
 
 EXAMPLES
   pabrikon --build
-    build icon to png
+    build icon to png in latest file modified
+
+  pabrikon --build --all
+    build icon to png all files
 
   pabrikon --build --type=svg
 
@@ -136,6 +141,13 @@ EXAMPLES
 
   pabrikon --clean --type=svg
     clean the project from svg file
+
+  pabrikon -g
+  pabrikon --makesvg
+	build icons in svg file
+
+  pabrikon -g -a
+    build icon to png all files
 
   pabrikon -h
     show this help usage
@@ -160,6 +172,10 @@ EXAMPLES
   pabrikon -p
   pabrikon --makepng
     build icons in png file
+
+  pabrikon -p -a
+  pabrikon --makepng --all
+    build icon to png all files
 
   pabrikon -n --name=NAME.svg --directory=places
   pabrikon --new --name=NAME.svg --directory=places

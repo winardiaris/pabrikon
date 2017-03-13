@@ -229,7 +229,7 @@ def make_png():
     print '[info] Start export png files'
     logging.info("Start export png files")
     current_dir=os.getcwd()
-    
+
     if cmd_exists("rsvg-convert"):
         for icon_ in list_dirs:
             if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):

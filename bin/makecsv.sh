@@ -54,6 +54,5 @@ for target in $(find . -type l | grep scalable)
       fi
 
     fi
-
   done
 

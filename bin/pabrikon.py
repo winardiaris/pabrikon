@@ -230,36 +230,41 @@ def make_png():
     logging.info("Start export png files")
     current_dir=os.getcwd()
 
-    if cmd_exists("rsvg-convert"):
-        for icon_ in list_dirs:
-            if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):
-                print current_dir + "/" + icon_ + "/scalable"
+    if check_last_updated(""):
+        if cmd_exists("rsvg-convert"):
+            for icon_ in list_dirs:
+                if os.path.exists(current_dir + "/" + icon_ + "/scalable" ):
+                    print current_dir + "/" + icon_ + "/scalable"
 
-                for size_ in icon_sizes:
-                    if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
-                        subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
+                    for size_ in icon_sizes:
+                        if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
+                            subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
 
-                    for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
-                        file_ =  files.replace('.svg','')
+                        for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
+                            file_ =  files.replace('.svg','')
 
-                        source = current_dir + "/" + icon_ + "/scalable/" + file_ + ".svg"
-                        destination = current_dir + "/"+icon_ + "/" + size_ + "/" + file_ + ".png"
-                        width = size_
-                        height = size_
+                            source = current_dir + "/" + icon_ + "/scalable/" + file_ + ".svg"
+                            destination = current_dir + "/"+icon_ + "/" + size_ + "/" + file_ + ".png"
+                            width = size_
+                            height = size_
 
-                        if alls:
-                            export_png(source,destination,width,height)
-                        else:
-                            if check_last_updated(source):
+                            if alls:
                                 export_png(source,destination,width,height)
+                            else:
+                                if check_last_updated(source):
+                                    export_png(source,destination,width,height)
 
 
-        create_last_updated()
-        print '[info] Exporting png has been finished'
-        logging.info("Exporting png has been finished")
+            create_last_updated()
+            print '[info] Exporting png has been finished'
+            logging.info("Exporting png has been finished")
+        else:
+            print '[error] please install librsvg2-bin for export to svg'
+            logging.error('please install librsvg2-bin for export to svg')
     else:
-        print '[error] please install librsvg2-bin for export to svg'
-        logging.error('please install librsvg2-bin for export to svg')
+        print '[info] No newest files'
+        print '[info] Use -a to export all files'
+        logging.info("No newest files")
 
     # how to use
     # pabrikon --makepng
@@ -370,6 +375,7 @@ def make_svg():
             logging.error('please install librsvg2-bin for export to svg')
     else:
         print '[info] No newest files'
+        print '[info] Use -a to export all files'
         logging.info("No newest files")
 
     # how to use

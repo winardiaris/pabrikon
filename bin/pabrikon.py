@@ -62,7 +62,8 @@ def pabrikon():
 
 
 def create_last_updated():
-    os.system("rm -rf " + current_dir + "/data/last_updated && echo " + str(time.time()) + " > " + current_dir + "/data/last_updated")
+    os.system("rm -rf " + current_dir + "/data/last_updated && echo " + \
+     str(time.time()) + " > " + current_dir + "/data/last_updated")
 
 def check_last_updated(i):
     a = os.path.getmtime(current_dir + "/data/last_updated")
@@ -98,7 +99,20 @@ def check_last_updated(i):
 def build():
     print '[info] Start building icons'
     logging.info("Starting building icons")
-    # clean_project()
+
+    if not check_last_updated(""):
+        print '[info] No newest files'
+        print '[info] Use -a to export all files'
+        logging.info("No newest files")
+
+        if not alls:
+            quit()
+        else:
+            clean_project()
+
+    else:
+        clean_project()
+
     if types:
         if types == 'svg':
             make_svg()
@@ -115,7 +129,6 @@ def build():
 
 def clean_project():
     print '[info] Start clean project'
-    # current_dir=os.getcwd()
 
     logging.info("Start Clean project")
     logging.debug("current directory: " + current_dir)
@@ -244,14 +257,19 @@ def make_png():
                 print current_dir + "/" + icon_ + "/scalable"
 
                 for size_ in icon_sizes:
-                    if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
-                        subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
+                    if not os.path.exists(current_dir + "/" + icon_ + "/" \
+                        + size_):
+                        subprocess.check_output(['mkdir', '-p',current_dir + \
+                        "/" + icon_ + "/" + size_ ])
 
-                    for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
+                    for files in os.listdir(current_dir + "/" + icon_ + \
+                        "/scalable"):
                         file_ =  files.replace('.svg','')
 
-                        source = current_dir + "/" + icon_ + "/scalable/" + file_ + ".svg"
-                        destination = current_dir + "/"+icon_ + "/" + size_ + "/" + file_ + ".png"
+                        source = current_dir + "/" + icon_ + "/scalable/" + \
+                            file_ + ".svg"
+                        destination = current_dir + "/"+icon_ + "/" + size_ + \
+                            "/" + file_ + ".png"
                         width = size_
                         height = size_
 
@@ -359,14 +377,19 @@ def make_svg():
                 print current_dir + "/" + icon_ + "/scalable"
 
                 for size_ in icon_sizes:
-                    if not os.path.exists(current_dir + "/" + icon_ + "/" + size_):
-                        subprocess.check_output(['mkdir', '-p',current_dir + "/" + icon_ + "/" + size_ ])
+                    if not os.path.exists(current_dir + "/" + icon_ + "/" + \
+                        size_):
+                        subprocess.check_output(['mkdir', '-p',current_dir + \
+                            "/" + icon_ + "/" + size_ ])
 
-                    for files in os.listdir(current_dir + "/" + icon_ + "/scalable"):
+                    for files in os.listdir(current_dir + "/" + icon_ + \
+                        "/scalable"):
                         file_ =  files.replace('.svg','')
 
-                        source = current_dir + "/" + icon_ + "/scalable/" + file_ + ".svg"
-                        destination = current_dir + "/" + icon_ + "/" + size_ + "/" + file_ + ".svg"
+                        source = current_dir + "/" + icon_ + "/scalable/" + \
+                            file_ + ".svg"
+                        destination = current_dir + "/" + icon_ + "/" + size_ \
+                            + "/" + file_ + ".svg"
                         width = size_
                         height = size_
 

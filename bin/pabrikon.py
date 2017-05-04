@@ -265,7 +265,7 @@ def make_png():
     # pabrikon --makepng
 
 def export_png(source,destination,width,height):
-    logging.info("Exporting " + source + " to " + destination)
+    logging.info("Exporting " + source + " => " + destination)
     if verbose:
         os.system("rsvg-convert " + source + " -o " + destination + \
                 " -f png -w " + width + " -h " + height)
@@ -376,7 +376,7 @@ def make_svg():
     # pabrikon --makesvg
 
 def export_svg(source,destination,width,height):
-    logging.info("Exporting " + source + " to " + destination)
+    logging.info("Exporting " + source + " => " + destination)
     if verbose:
         os.system("rsvg-convert " + source + " -o " + destination \
                 + " -f svg -w " + width + " -h " + height)
@@ -569,8 +569,8 @@ def main(argv):
         format=log_format)
 
     try:
-        opts,args = getopt.getopt(argv,"bcd:ghlnopst:uv",
-                ["build","clean","directory=","help","list","makepng",
+        opts,args = getopt.getopt(argv,"abcd:ghlnopst:uv",
+                ["all","build","clean","directory=","help","list","makepng",
                 "makesym","makesvg","new","newproject","opencsv",
                 "opensvg","makecsv","update","verbose","version",
                 "name=","comment=","source=","type="])

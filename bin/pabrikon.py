@@ -53,6 +53,8 @@ def pabrikon():
                 open_csv()
             elif op == 'opensvg':
                 open_svg()
+            elif op == 'readcsv':
+                read_csv()
             else:
                 help_pabrikon()
         else:
@@ -558,6 +560,55 @@ def open_svg():
     # how to use
     # pabrikon --open --name inkscape --directory apps
 
+def read_csv():
+    iconscsv = current_dir + "/data/Icon.csv"
+    directorycsv = current_dir + "/data/Directory.csv"
+
+    if os.path.exists(iconscsv):
+        if os.path.exists(directorycsv):
+            with open(iconscsv, 'rb') as csvicons:
+                iconsreader = csv.reader(csvicons,delimiter=',',quotechar='"')
+                print "[Icon Theme]"
+                for row in iconsreader:
+                    print row[0] + "=" + row[1]
+
+            with open(directorycsv,'rb') as csvdirectory:
+                diretoryreader = csv.reader(csvdirectory,delimiter=',',quotechar='"')
+                directory_ar = []
+                directory_list = ""
+                for row in diretoryreader:
+                    # print row
+                    if( '#size#' in row[0] ):
+                        name_split = row[0].split("/")
+                        size_split = row[1].split(",")
+                        for size_ in size_split:
+                            directory_ar.append(name_split[0] + "/" + size_)
+                            directory_list+="\n\n[" + name_split[0] + "/" + size_ + "]"
+                            directory_list+="\nSize=" + size_
+                            directory_list+="\nContext=" + row[2]
+                            directory_list+="\nType=" + row[3]
+                    elif ("scalable" in row[0]):
+                        directory_ar.append(row[0])
+                        directory_list+="\n\n[" + row[0] +"]"
+                        directory_list+="\nSize=" + row[1]
+                        directory_list+="\nContext=" + row[2]
+                        directory_list+="\nType=" + row[3]
+                        directory_list+="\nMinSize=" + row[4]
+                        directory_list+="\nMaxSize=" + row[5]
+                    else:
+                        directory_ar.append(row[0])
+                        directory_list+="\n\n[" + row[0] +"]"
+                        directory_list+="\nSize=" + row[1]
+                        directory_list+="\nContext=" + row[2]
+                        directory_list+="\nType=" + row[3]
+                print "Directories=" + str(directory_ar).replace(' ','').replace('[','').replace(']','').replace('\'','')
+                print directory_list
+
+        else:
+            print '[error] data/Directory.csv no such file directory'
+    else:
+        print '[error] data/Icon.csv no such file directory'
+
 def update():
     # for update pabrikon
     os.system('cd /opt/pabrikon/ && sudo  git pull')
@@ -603,10 +654,10 @@ def main(argv):
         format=log_format)
 
     try:
-        opts,args = getopt.getopt(argv,"abcd:ghlnopst:uv",
+        opts,args = getopt.getopt(argv,"abcd:ghlnoprst:uv",
                 ["all","build","clean","directory=","help","list","makepng",
                 "makesym","makesvg","new","newproject","opencsv",
-                "opensvg","makecsv","update","verbose","version",
+                "opensvg","makecsv","update","verbose","version","readcsv"
                 "name=","comment=","source=","type="])
     except getopt.GetoptError:
         help_pabrikon()
@@ -644,6 +695,8 @@ def main(argv):
             op = 'opencsv'
         elif opt in ("-o","--open"):
             op = 'opensvg'
+        elif opt in ("-r","--readcsv"):
+            op = 'readcsv'
         elif opt in ('--source'):
             source = arg
         elif opt in ('-t','--type'):

@@ -5,6 +5,7 @@ import getopt
 import logging
 import logging.handlers
 import os
+import re
 import subprocess
 import sys
 import time
@@ -19,10 +20,12 @@ name = 'default'
 op = ''
 source = 'default'
 types = 'default'
+type_dir = 'default'
 verbose = False
 last_updated = ''
 iconslist = ""
 directorylist = ""
+directory_ar = []
 
 def __pabrikon__():
     if op == 'help':
@@ -38,7 +41,7 @@ def __pabrikon__():
     else:
         if os.path.exists(current_dir + "/data"):
             if op == 'build':
-                build()
+                __build__()
             elif op == 'cleanproject':
                 __cleanproject__()
             elif op == 'list':
@@ -59,6 +62,8 @@ def __pabrikon__():
                 __opensvg__()
             elif op == 'readcsv':
                 __readcsv__()
+            elif op == 'makeicon':
+                __makeicon__()
             else:
                 __help__()
         else:
@@ -72,37 +77,41 @@ def __createlastupdated__():
      str(time.time()) + " > " + current_dir + "/data/last_updated")
 
 def __checklastupdated__(i):
-    a = os.path.getmtime(current_dir + "/data/last_updated")
+    if os.path.exists(current_dir + "/data/last_updated"):
+        a = os.path.getmtime(current_dir + "/data/last_updated")
 
-    if i == "":
-        max_mtime = 0
-        for dirname, subdirs, files in os.walk("."):
-            for fname in files:
-                full_path = os.path.join(dirname, fname)
-                mtime = os.stat(full_path).st_mtime
-                if mtime > max_mtime:
-                    max_mtime = mtime
-                    # max_dir = dirname
-                    max_file = full_path
+        if i == "":
+            max_mtime = 0
+            for dirname, subdirs, files in os.walk("."):
+                for fname in files:
+                    full_path = os.path.join(dirname, fname)
+                    mtime = os.stat(full_path).st_mtime
+                    if mtime > max_mtime:
+                        max_mtime = mtime
+                        # max_dir = dirname
+                        max_file = full_path
 
-        if max_file != "last_updated":
+            if max_file != "last_updated":
 
-            b = os.path.getmtime(max_file)
+                b = os.path.getmtime(max_file)
 
+                if b > a:
+                    return True
+            else:
+                return False
+        else:
+            b = os.path.getmtime(i)
             if b > a:
                 return True
-        else:
-            return False
+            else:
+                return False
     else:
-        b = os.path.getmtime(i)
-        if b > a:
-            return True
-        else:
-            return False
+        return False
+        os.system("touch " + current_dir + "/data/last_updated")
 
 
 
-def build():
+def __build__():
     print '[info] Start building icons'
     logging.info("Starting building icons")
 
@@ -245,66 +254,12 @@ def __makecsvdata__():
     # pabrikon --makecsv --source=pabrik
 
 def __makepng__():
-    print '[info] Start export png files'
-    logging.info("Start export png files")
-    current_dir = os.getcwd()
-
-    if not __checklastupdated__(""):
-        print '[info] No newest files'
-        print '[info] Use -a to export all files'
-        logging.info("No newest files")
-
-        if not alls:
-            quit()
-
-    if __cmdexists__("rsvg-convert"):
-        for icon_ in list_dirs:
-            if os.path.exists(current_dir + "/" + icon_ + "/scalable"):
-                print current_dir + "/" + icon_ + "/scalable"
-
-                for size_ in icon_sizes:
-                    if not os.path.exists(current_dir + "/" + icon_ + "/" \
-                        + size_):
-                        subprocess.check_output(['mkdir', '-p', current_dir + \
-                        "/" + icon_ + "/" + size_])
-
-                    for files in os.listdir(current_dir + "/" + icon_ + \
-                        "/scalable"):
-                        file_ = files.replace('.svg', '')
-
-                        source = current_dir + "/" + icon_ + "/scalable/" + \
-                            file_ + ".svg"
-                        destination = current_dir + "/"+icon_ + "/" + size_ + \
-                            "/" + file_ + ".png"
-                        width = size_
-                        height = size_
-
-                        if alls:
-                            __exportpng__(source, destination, width, height)
-                        else:
-                            if __checklastupdated__(source):
-                                __exportpng__(source, destination, width, height)
-
-
-        __createlastupdated__()
-        print '[info] Exporting png has been finished'
-        logging.info("Exporting png has been finished")
-    else:
-        print '[error] please install librsvg2-bin for export to svg'
-        logging.error('please install librsvg2-bin for export to svg')
+    global types
+    types = "png"
+    __makeicon__()
 
     # how to use
     # pabrikon --makepng
-
-def __exportpng__(source, destination, width, height):
-    logging.info("Exporting " + source + " => " + destination)
-    if verbose:
-        os.system("rsvg-convert " + source + " -o " + destination + \
-                " -f png -w " + width + " -h " + height)
-    else:
-        os.system("rsvg-convert " + source + " -o " + destination + \
-                " -f png -w " + width + " -h " + height + " >> " + \
-                log_dir + log_file)
 
 def __makesym__():
     print '[info] Start make symbolic link from data'
@@ -365,65 +320,24 @@ def __makesym__():
     # pabrikon --makesym
 
 def __makesvg__():
-    print '[info] Start export svg files'
-    logging.info("Start export svg files")
-    current_dir=os.getcwd()
-
-    if not __checklastupdated__(""):
-        print '[info] No newest files'
-        print '[info] Use -a to export all files'
-        logging.info("No newest files")
-
-        if not alls:
-            quit()
-
-    if __cmdexists__("rsvg-convert"):
-        for icon_ in list_dirs:
-            if os.path.exists(current_dir + "/" + icon_ + "/scalable"):
-                print current_dir + "/" + icon_ + "/scalable"
-
-                for size_ in icon_sizes:
-                    if not os.path.exists(current_dir + "/" + icon_ + "/" + \
-                        size_):
-                        subprocess.check_output(['mkdir', '-p', current_dir + \
-                            "/" + icon_ + "/" + size_])
-
-                    for files in os.listdir(current_dir + "/" + icon_ + \
-                        "/scalable"):
-                        file_ = files.replace('.svg', '')
-
-                        source = current_dir + "/" + icon_ + "/scalable/" + \
-                            file_ + ".svg"
-                        destination = current_dir + "/" + icon_ + "/" + size_ \
-                            + "/" + file_ + ".svg"
-                        width = size_
-                        height = size_
-
-                        if alls:
-                            __export_svg__(source, destination, width, height)
-                        else:
-                            if __checklastupdated__(source):
-                                __export_svg__(source, destination, width, height)
-
-        __createlastupdated__()
-        print '[info] Exporting svg has been finished'
-        logging.info("Exporting svg has been finished")
-    else:
-        print '[error] please install librsvg2-bin for export to svg'
-        logging.error('please install librsvg2-bin for export to svg')
+    global types
+    types = "svg"
+    __makeicon__()
 
     # how to use
     # pabrikon --makesvg
 
-def __export_svg__(source, destination, width, height):
-    logging.info("Exporting " + source + " => " + destination)
-    if verbose:
-        os.system("rsvg-convert " + source + " -o " + destination \
-                + " -f svg -w " + width + " -h " + height)
+def __export__(source, destination, width, height):
+    if (types == 'svg'):
+        t = 'svg'
     else:
-        os.system("rsvg-convert " + source + " -o " + destination \
-                + " -f svg -w " + width + " -h " + height + " >> " \
-                + log_dir + log_file)
+        t = 'png'
+
+    logging.info("Exporting " + source + " => " + destination)
+    os.system("rsvg-convert " + source + " -o " + destination \
+                + " -f " + t + " -w " + width + " -h " + height)
+    if verbose:
+        print "Exporting " + source + " => " + destination
 
 def __makeindex__():
     target = open(current_dir + "/index.theme", "w")
@@ -585,8 +499,82 @@ def __opensvg__():
     # how to use
     # pabrikon --open --name inkscape --directory apps
 
+def __makeicon__():
+    print '[info] Start export ' + types +' files'
+    logging.info("Start export " + types +" files")
+
+    if not __checklastupdated__(""):
+        print '[info] No newest files'
+        print '[info] Use -a to export all files'
+        logging.info("No newest files")
+
+        if not alls:
+            quit()
+
+    if __cmdexists__("rsvg-convert"):
+        r = re.compile(".*scalable*")
+        n = filter(r.match,directory_ar)
+        # print n
+        for s in n:
+            # print s
+            x = s.split("/")
+
+            if(type_dir == "1"):
+                cat_ = x[0]
+            else:
+                cat_ = x[1]
+            # print cat_
+            r_ = re.compile(".*" + cat_ + "*")
+            n_ = filter(r_.match,directory_ar)
+            f = ['.*scalable*','.*symbolic*']
+            e = [re.compile(x) for x in f]
+            fl = [s_ for s_ in n_ if any(re.match(s_) for re in e)]
+            # print fl
+
+            d = list(set(n_)-set(fl))
+            # print d
+            for xx in d:
+                # print "export " + s + " => " + xx
+                size = xx.split("/")
+                if(type_dir == "1"):
+                    size_ = size[1]
+                elif(type_dir == "2"):
+                    sizes = size[0].split("x")
+                    size_ = sizes[0]
+                else:
+                    size_ = size[0]
+
+                for files in os.listdir(current_dir + "/" + s):
+                    file_ = files.replace('.svg', '')
+
+                    if (types == 'svg'):
+                        t = 'svg'
+                    else:
+                        t = 'png'
+
+                    source = current_dir + "/" + s + "/" + file_ + ".svg"
+                    destination = current_dir + "/" + xx + "/" + file_ + "." + t
+                    width = size_
+                    height = size_
+                    # print "export : " + source + " => " + destination + "["+ width + "x" + height + "]"
+                    if alls:
+                        __export__(source, destination, width, height)
+                    else:
+                        if __checklastupdated__(source):
+                            __export__(source, destination, width, height)
+
+        __createlastupdated__()
+        print '[info] Exporting ' + types + ' has been finished'
+        logging.info("Exporting " + types + " has been finished")
+    else:
+        print '[error] please install librsvg2-bin for export to svg'
+        logging.error('please install librsvg2-bin for export to svg')
+
 def __readcsv__():
-    global iconslist, directorylist
+    global iconslist
+    global directorylist
+    global type_dir
+    global directory_ar
     iconscsv = current_dir + "/data/Icon.csv"
     directorycsv = current_dir + "/data/Directory.csv"
 
@@ -597,24 +585,32 @@ def __readcsv__():
                 iconslist = ""
                 iconslist += "[Icon Theme]\n"
                 for row in iconsreader:
-                    iconslist += row[0] + "=" + row[1] + "\n"
+                    if(row[0] == "type") or (row[0] == "Type"):
+                        type_dir = row[1]
+                    else:
+                        iconslist += row[0] + "=" + row[1] + "\n"
 
             with open(directorycsv, 'rb') as csvdirectory:
                 diretoryreader = csv.reader(csvdirectory, delimiter=',', quotechar='"')
-                directory_ar = []
                 directorylist = ""
                 for row in diretoryreader:
                     # print row
                     if('#size#' in row[0]):
                         name_split = row[0].split("/")
                         size_split = row[1].split(",")
+
                         for size_ in size_split:
-                            directory_ar.append(name_split[0] + "/" + size_)
-                            directorylist += "\n\n[" + name_split[0] + "/" + size_ + "]"
+                            if (type_dir == "1"):
+                                directorylist += "\n\n[" + name_split[0] + "/" + size_ + "]"
+                                directory_ar.append(name_split[0] + "/" + size_)
+                            elif (type_dir == "3"):
+                                directorylist += "\n\n[" + size_ + "/" + name_split[1] + "]"
+                                directory_ar.append(size_ + "/" + name_split[1])
+
                             directorylist += "\nSize=" + size_
                             directorylist += "\nContext=" + row[2]
                             directorylist += "\nType=" + row[3]
-                            os.system("mkdir -p " + name_split[0] + "/" + size_)
+
                     elif ("scalable" in row[0]):
                         directory_ar.append(row[0])
                         directorylist += "\n\n[" + row[0] +"]"
@@ -629,11 +625,11 @@ def __readcsv__():
                         directorylist += "\nSize=" + row[1]
                         directorylist += "\nContext=" + row[2]
                         directorylist += "\nType=" + row[3]
-                        os.system("mkdir -p " + row[0] + "/" + row[1])
 
                 d = "\nDirectories="
                 for i in directory_ar:
                     i.replace(' ', '').replace('[', '').replace(']', '').replace('\'', '')
+                    os.system("mkdir -p " + i)
                     if not directory_ar.index(i) == 0:
                         d += "," + i
                     else:
@@ -698,7 +694,7 @@ def __main__(argv):
                                     "makesym", "makesvg", "new", "newproject", "opencsv", \
                                     "opensvg", "makecsv", "update", "verbose", "version", \
                                     "readcsv", "makeindex", "name=", "comment=", "source=", \
-                                    "type="])
+                                    "type=", "makeicon",])
     except getopt.GetoptError:
         __help__()
         sys.exit(2)
@@ -749,6 +745,8 @@ def __main__(argv):
             verbose = True
         elif opt == '--version':
             op = 'version'
+        elif opt == '--makeicon':
+            op = 'makeicon'
         else:
             print False, "unhandle option"
     __readcsv__()

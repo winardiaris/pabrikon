@@ -1,151 +1,233 @@
-PABRIKON(1)    USERMANUAL    PABRIKON(1)
-
-NAME
-    pabrikon
-
-DESCRIPTION
-    Pabrikon can run on all GNU/Linux distributions and designed
-    to help GNU/Linux distro developers, especially for the artwork team
-    to create and manage their own icons.
-
-OPTION
-  -a, --all
-    force export from all files
-
-  -b, --build
-    build icon from svg to png
-
-  -c, --clean
-    clean project dir from png files
-
-  --comment
-    this for comment a new icon project
-
-  -d, --directory
-    select the type of directory icon project [ex:apps, categories, places, etc..]
-
-  -h, --help
-    output usage information
-
-  -g, --makesvg
-    build icons in svg file
-
-  -l, --list
-    list file in current project
-
-  --makecsv
-    make csv file for icon project from symlink or pabrikon default
-
-  -p,--makepng
-    build icons in png file
-
-  -s,--makesym
-    build symbolic link file from csv file in data directory
-
-  --minizer
-    reduce the size of svg file
-
-  --name
-    naming a new project or name a new icon
-
-  --new
-    copy default icon svg file to new icon
-
-  --newproject
-    make a new project icon could be blank projects or from git url
-
-  --opencsv
-    open csv file on the project or pabrikon default
-
-  --source
-    source of --makecsv , --newproject , --opencsv
-
-  -t, --types
-    for --clean {default|png|symlink}
-    for --list {all|png|svg|symlink}
-
-  -u, --update
-    update pabrikon
-
-  --vaccum
-    vaccum size svg file with feature from Inkscape
-
-  -v, --verbose
-    increase verbosity
-
-  --version
-    show pabrikon version
-
-
-EXAMPLES
-  pabrikon --build
-    build icon to png in latest file modified
-
-  pabrikon --build --all
-    build icon to png all files
-
-  pabrikon --build --type=svg
-
-  pabrikon --clean
-    clean the project from png, symlink and svg file
-
-  pabrikon --clean --type=png
-    clean the project from png file
-
-  pabrikon --clean --type=symlink
-    clean the project from symlink file
-
-  pabrikon --clean --type=svg
-    clean the project from svg file
-
-  pabrikon -g
-  pabrikon --makesvg
-	build icons in svg file
-
-  pabrikon -g -a
-    build icon to png all files
-
-  pabrikon -h
-    show this help usage
-
-  pabrikon -l -t {all|png|svg|symlink}
-    show list file in current project
-
-  pabrikon --makecsv
-  pabrikon --makecsv --source=default
-    make csv file from symlink in current project
-
-  pabrikon --makecsv --source=pabrikon
-    copy csv file from default pabrikon to current project
-
-  pabrikon -s
-  pabrikon --makesym
-    build symbolic link file from csv file in data directory
-
-  pabrikon --makecsv --source=pabrikon
-    copy csv file from pabrikon default to current project
-
-  pabrikon -p
-  pabrikon --makepng
-    build icons in png file
-
-  pabrikon -p -a
-  pabrikon --makepng --all
-    build icon to png all files
-
-  pabrikon -n --name=NAME.svg --directory=places
-  pabrikon --new --name=NAME.svg --directory=places
-    copy default icon svg file to <directory>/scalable/<name>
-
-  pabrikon --newproject --name=NAME --comment="comment or description for this icon "
-    make new blank project with <name> of icon
-
-  pabrikon --newproject --source=git-url-of-icon-project.git
-    make new project with source from git url
-
-  pabrikon --opencsv --name=apps
-    open csv file with name apps.csv in current icon project
-
-  pabrikon --opencsv --name=places --source=pabrikon
-    open csv file with name places.csv in pabrikon default data
-
+.TH PABRIKON 1 "2026-10-07" "Pabrikon" "User Commands"
+.SH NAME
+pabrikon \- develop, validate, build, and package Linux icon themes
+.SH SYNOPSIS
+.B pabrikon
+.I command
+[OPTIONS]
+.SH DESCRIPTION
+.B pabrikon
+is a Python command-line toolkit for developing Linux icon themes. It manages
+project configuration, validates SVG sources and theme metadata, builds icon
+variants, creates alias links, optimizes SVG files, and packages generated
+themes.
+.PP
+Source SVG files belong under
+.B icons/<context>/scalable/ .
+Generated theme files are written under
+.IR build/ ,
+and package archives are written under
+.IR dist/ .
+.SH COMMANDS
+.TP
+.B init [TARGET] [--name NAME]
+Create a project in TARGET (default: current directory). Creates
+.BR pabrikon.toml ,
+.BR README.md ,
+.BR index.theme ,
+.BR data/aliases.toml ,
+and the configured
+.B icons/<context>/scalable/
+directories. Existing project files are preserved; initialization fails if
+.B pabrikon.toml
+already exists.
+.TP
+.B validate [PATH] [--json]
+Check project configuration, source icons, theme metadata, aliases, and
+generated output. PATH defaults to the current directory. The
+.B --json
+option prints machine-readable diagnostics.
+.TP
+.B build [PATH] [OPTIONS]
+Build configured SVG and PNG variants in
+.BR build/ .
+The output includes a build-ready
+.BR index.theme .
+Unchanged outputs may be reused.
+.TP
+.B clean [PATH] [--type TYPE] [--dry-run]
+Remove generated files from
+.BR build/ .
+TYPE may be
+.BR build ,
+.BR png ,
+.BR svg ,
+or
+.BR symlink ;
+the default is
+.BR build .
+Source files under
+.B icons/
+are not removed. Use
+.B --dry-run
+to list the files that would be removed.
+.TP
+.B aliases build [PATH] [--dry-run]
+Create symbolic links in
+.B build/
+from alias definitions in
+.BR data/aliases.toml .
+.TP
+.B optimize [PATH] [--dry-run] [--in-place]
+Optimize source SVG files using
+.BR svgcleaner .
+By default, optimized copies are written below
+.BR dist/optimized/icons/ .
+With
+.BR --in-place ,
+validated optimized files replace their sources. Use
+.B --dry-run
+to preview the operation.
+.TP
+.B package [PATH] [--dry-run]
+Create a deterministic
+.B .tar.gz
+archive in
+.B dist/
+from a successfully built and validated theme. The dry-run option validates
+the package inputs without creating an archive.
+.TP
+.B info [PATH] [--json]
+Show project metadata and icon counts. The
+.B --json
+option prints JSON.
+.TP
+.B list [KIND] [PATH] [--json]
+List icons, directories, aliases, or generated files. KIND defaults to
+.BR icons .
+.TP
+.B theme init [PATH] [--force]
+Generate the root
+.B index.theme
+from
+.BR pabrikon.toml .
+An existing file is preserved unless
+.B --force
+is supplied.
+.TP
+.B theme show [PATH]
+Print the effective theme metadata.
+.TP
+.B theme validate [PATH]
+Validate
+.B index.theme
+against the project configuration.
+.SH OPTIONS
+.TP
+.B --version
+Show the installed Pabrikon version.
+.TP
+.B -v, --verbose
+Show detailed operation output.
+.TP
+.B -q, --quiet
+Suppress normal output; errors remain visible.
+.TP
+.B --debug
+Show a traceback for unexpected errors.
+.TP
+.B --dry-run
+Preview supported changes without writing generated output. Availability is
+command-specific; see the command help.
+.TP
+.B --all
+Rebuild every output even if it is up to date (build only).
+.TP
+.B --size N
+Build one configured raster size.
+.TP
+.B --sizes N,N,...
+Build a comma-separated set of configured raster sizes.
+.TP
+.B --directory DIR
+Build only one configured icon context.
+.TP
+.B --icon NAME
+Build only the named icon. NAME may be an icon name or CONTEXT/NAME.
+.TP
+.B --type TYPE
+Select generated files for clean: build, png, svg, or symlink.
+.TP
+.B --in-place
+Replace source SVGs with validated optimized results (optimize only).
+.TP
+.B --json
+Print machine-readable output for validate, info, or list.
+.SH PROJECT LAYOUT
+.nf
+my-theme/
+|-- pabrikon.toml
+|-- README.md
+|-- index.theme
+|-- icons/                    editable source files
+|   |-- apps/scalable/*.svg
+|   |-- places/scalable/*.svg
+|   `-- ...
+|-- data/
+|   `-- aliases.toml          optional
+|-- build/                    generated by pabrikon build
+|   |-- index.theme
+|   |-- apps/scalable/*.svg
+|   `-- apps/48x48/*.png
+`-- dist/                     packages and optimized copies
+.fi
+.PP
+Each enabled context in
+.B build.directories.enabled
+has a source directory at
+.B icons/<context>/scalable/ .
+Raster sizes and output formats are configured in
+.BR pabrikon.toml .
+The
+.B build/
+directory is created by the first build and can be regenerated without
+changing the source tree.
+.SH EXAMPLES
+.TP
+Create a project:
+.B pabrikon init my-theme
+.TP
+Validate the current project:
+.B pabrikon validate .
+.TP
+Preview a 48-pixel build:
+.B pabrikon build . --size 48 --dry-run
+.TP
+Build all configured sizes:
+.B pabrikon build .
+.TP
+Remove generated files after previewing the operation:
+.br
+.B pabrikon clean . --dry-run
+.br
+.B pabrikon clean .
+.TP
+Optimize SVGs without replacing sources:
+.B pabrikon optimize .
+.TP
+Package a completed theme:
+.B pabrikon package .
+.SH DEPENDENCIES
+Python 3.12 or newer is required. The
+.B rsvg-convert
+program (provided by librsvg) is required to render PNG icons. The
+.B svgcleaner
+program is required to optimize SVG files.
+.SH EXIT STATUS
+.TP
+.B 0
+Command completed successfully.
+.TP
+.B 1
+Validation or execution failed.
+.TP
+.B 2
+Invalid command-line arguments or configuration.
+.SH LIMITATIONS
+Remote project adoption is not implemented yet. Pabrikon v2 uses
+.B data/aliases.toml
+instead of the legacy CSV alias tables and does not import external CSV maps.
+Browser preview is not currently available.
+.SH SEE ALSO
+.BR rsvg-convert (1),
+.BR svgcleaner (1)

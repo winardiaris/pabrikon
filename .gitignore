@@ -1,1 +1,17 @@
 *.log
+.idea
+.python-version
+.pytest_cache
+.vscode
+.venv
+build
+*.egg-info/
+docs
+!docs/
+docs/*
+!docs/PRD/
+docs/PRD/*
+!docs/PRD/PRD-pabrikon.md
+AGENTS.md
+CLAUDE.md
+development-test/

@@ -4,4 +4,4 @@ __all__ = ["__version__"]
 
 """Pabrikon's Python package and version metadata."""
 
-__version__ = "2.0.0a0"
+__version__ = "2.0.0a1"

@@ -36,6 +36,11 @@ class Output:
         if self.verbose and not self.quiet:
             print(message)
 
+    def write(self, message: str) -> None:
+        """Write primary command output unless quiet mode is active."""
+        if not self.quiet:
+            print(message, end="")
+
     def error(self, message: str, hint: str | None = None) -> None:
         """Write an error and optional next-step hint to standard error."""
         print(f"Error: {message}", file=sys.stderr)
@@ -53,9 +58,35 @@ def print_diagnostics(out: Output, diagnostics: list[Diagnostic]) -> None:
     print_failures([(item.path, item.message) for item in diagnostics if item.level == ERROR])
 
 
+def emit_json(report: object) -> None:
+    """Write one machine-readable JSON value to standard output."""
+    print(json.dumps(report, indent=2))
+
+
+def json_error(args: argparse.Namespace, message: str, hint: str | None = None) -> None:
+    """Write an expected command error in the JSON envelope used by automation."""
+    command = args.command
+    if command == "theme":
+        command = f"theme {args.theme_command}"
+    elif command == "aliases":
+        command = f"aliases {args.alias_command}"
+    error = {"message": message}
+    if hint:
+        error["hint"] = hint
+    emit_json({"command": command, "ok": False, "error": error})
+
+
 def cmd_init(args: argparse.Namespace, out: Output) -> int:
     """Initialize a project and report the created starter paths."""
     root, created = init_project(Path(args.target), name=args.name)
+    if args.json:
+        emit_json({
+            "command": "init",
+            "ok": True,
+            "project": str(root),
+            "created": [path.relative_to(root).as_posix() if path != root else "." for path in created],
+        })
+        return EXIT_OK
     for path in created:
         out.detail(f"created {path}")
     out.info(f"Initialized project at {root}")
@@ -72,15 +103,33 @@ def cmd_theme(args: argparse.Namespace, out: Output) -> int:
                 hint="Use `pabrikon theme init --force` to regenerate it from pabrikon.toml.",
             )
         project.index_theme.write_text(render_index_theme(project.config), encoding="utf-8")
+        if args.json:
+            emit_json({"command": "theme init", "ok": True, "path": "index.theme"})
+            return EXIT_OK
         out.info(f"Wrote {project.index_theme}")
         return EXIT_OK
     if args.theme_command == "show":
-        if project.index_theme.is_file():
-            print(project.index_theme.read_text(encoding="utf-8"), end="")
+        content = (
+            project.index_theme.read_text(encoding="utf-8")
+            if project.index_theme.is_file()
+            else render_index_theme(project.config)
+        )
+        if args.json:
+            emit_json({"command": "theme show", "ok": True, "path": "index.theme", "content": content})
         else:
-            print(render_index_theme(project.config), end="")
+            out.write(content)
         return EXIT_OK
     diagnostics = validate_index_theme(project.index_theme, project.config)
+    if args.json:
+        errors = sum(item.level == ERROR for item in diagnostics)
+        warnings = sum(item.level == WARNING for item in diagnostics)
+        emit_json({
+            "valid": errors == 0,
+            "errors": errors,
+            "warnings": warnings,
+            "diagnostics": [item.to_dict() for item in diagnostics],
+        })
+        return EXIT_FAILURE if errors else EXIT_OK
     print_diagnostics(out, diagnostics)
     if any(item.level == ERROR for item in diagnostics):
         return EXIT_FAILURE
@@ -112,7 +161,8 @@ def cmd_build(args: argparse.Namespace, out: Output) -> int:
     """Run a project build and translate its report into CLI output and exit status."""
     started = time.monotonic()
     project = Project.load(Path(args.path))
-    out.info("Planning build (dry run)...\n" if args.dry_run else "Building icon theme...\n")
+    if not args.json:
+        out.info("Planning build (dry run)...\n" if args.dry_run else "Building icon theme...\n")
     report = build_project(
         project,
         sizes=parse_size_values(args.size, args.sizes),
@@ -121,6 +171,33 @@ def cmd_build(args: argparse.Namespace, out: Output) -> int:
         rebuild_all=args.all,
         dry_run=args.dry_run,
     )
+    if args.json:
+        emit_json({
+            "command": "build",
+            "ok": not report.failures,
+            "sources": report.sources,
+            "rendered": report.rendered,
+            "copied": report.copied,
+            "up_to_date": report.up_to_date,
+            "tasks": [
+                {
+                    "source": task.source.path.relative_to(project.root).as_posix(),
+                    "output": task.output.relative_to(project.root).as_posix(),
+                    "size": task.size,
+                }
+                for task in report.tasks
+            ],
+            "aliases": [
+                {
+                    "action": item.action,
+                    "path": item.link.relative_to(project.build_dir).as_posix(),
+                    "target": item.target,
+                }
+                for item in report.aliases
+            ],
+            "failures": [{"path": path, "message": message} for path, message in report.failures],
+        })
+        return EXIT_FAILURE if report.failures else EXIT_OK
     for task in report.tasks:
         if args.dry_run:
             out.info(f"  would build {task.describe(project.root)}")
@@ -150,6 +227,26 @@ def cmd_aliases(args: argparse.Namespace, out: Output) -> int:
     links = plan_alias_links(project, resolved)
     if not args.dry_run:
         apply_alias_links(links)
+    if args.json:
+        counts = {
+            action: sum(item.action == action for item in links)
+            for action in ("create", "replace", "unchanged", "remove")
+        }
+        emit_json({
+            "command": "aliases build",
+            "ok": not problems,
+            "counts": counts,
+            "links": [
+                {
+                    "action": item.action,
+                    "path": item.link.relative_to(project.build_dir).as_posix(),
+                    "target": item.target,
+                }
+                for item in links
+            ],
+            "problems": [item.to_dict() for item in problems],
+        })
+        return EXIT_FAILURE if problems else EXIT_OK
     print_alias_links(out, project.build_dir, links, args.dry_run)
     if not project.build_dir.is_dir():
         out.info("build/ does not exist yet; run `pabrikon build` to render alias targets first.")
@@ -165,6 +262,18 @@ def cmd_clean(args: argparse.Namespace, out: Output) -> int:
     """Remove selected generated files or display a dry-run plan."""
     project = Project.load(Path(args.path))
     paths = plan_clean(project, args.type)
+    if args.json:
+        if paths and not args.dry_run:
+            apply_clean(project, args.type, paths)
+        emit_json({
+            "command": "clean",
+            "ok": True,
+            "type": args.type,
+            "dry_run": args.dry_run,
+            "count": len(paths),
+            "paths": [path.relative_to(project.root).as_posix() for path in paths],
+        })
+        return EXIT_OK
     if not paths:
         out.info("Nothing to clean.")
         return EXIT_OK
@@ -184,6 +293,34 @@ def cmd_optimize(args: argparse.Namespace, out: Output) -> int:
     """Optimize source SVGs and report saved space or task failures."""
     project = Project.load(Path(args.path))
     report = optimize_project(project, in_place=args.in_place, dry_run=args.dry_run)
+    if args.json:
+        emit_json({
+            "command": "optimize",
+            "ok": not report.failures,
+            "dry_run": args.dry_run,
+            "in_place": args.in_place,
+            "tasks": [
+                {
+                    "source": task.source.relative_to(project.root).as_posix(),
+                    "destination": task.destination.relative_to(project.root).as_posix(),
+                    "original_size": task.original_size,
+                }
+                for task in report.tasks
+            ],
+            "completed": [
+                {
+                    "source": asset.task.source.relative_to(project.root).as_posix(),
+                    "destination": asset.task.destination.relative_to(project.root).as_posix(),
+                    "original_size": asset.task.original_size,
+                    "optimized_size": asset.optimized_size,
+                    "saved": asset.saved,
+                }
+                for asset in report.completed
+            ],
+            "bytes_saved": report.bytes_saved,
+            "failures": [{"path": path, "message": message} for path, message in report.failures],
+        })
+        return EXIT_FAILURE if report.failures else EXIT_OK
     for task in report.tasks:
         source = task.source.relative_to(project.root).as_posix()
         destination = task.destination.relative_to(project.root).as_posix()
@@ -191,7 +328,7 @@ def cmd_optimize(args: argparse.Namespace, out: Output) -> int:
             out.info(f"would optimize {source} -> {destination}")
     for asset in report.completed:
         source = asset.task.source.relative_to(project.root).as_posix()
-        out.info(
+        out.detail(
             f"{source}: {asset.task.original_size:,} B -> {asset.optimized_size:,} B "
             f"({asset.saved:+,} B)"
         )
@@ -217,6 +354,17 @@ def cmd_package(args: argparse.Namespace, out: Output) -> int:
     project = Project.load(Path(args.path))
     plan = package_project(project, dry_run=args.dry_run)
     output = plan.output.relative_to(project.root).as_posix()
+    if args.json:
+        emit_json({
+            "command": "package",
+            "ok": True,
+            "dry_run": args.dry_run,
+            "output": output,
+            "file_count": len(plan.files),
+            "files": [path.relative_to(project.build_dir).as_posix() for path in plan.files],
+            "directories": plan.directories,
+        })
+        return EXIT_OK
     if args.dry_run:
         out.info(f"Would create {output} ({len(plan.files):,} files).")
         for path in plan.files:
@@ -235,15 +383,15 @@ def cmd_validate(args: argparse.Namespace, out: Output) -> int:
         if not args.json:
             raise
         problem = Diagnostic(ERROR, "configuration", exc.message)
-        print(json.dumps({"valid": False, "errors": 1, "warnings": 0, "diagnostics": [problem.to_dict()]}, indent=2))
+        emit_json({"valid": False, "errors": 1, "warnings": 0, "diagnostics": [problem.to_dict()]})
         return exc.exit_code
 
     diagnostics = [item for items in sections.values() for item in items]
     errors = sum(1 for item in diagnostics if item.level == ERROR)
     warnings = sum(1 for item in diagnostics if item.level == WARNING)
     if args.json:
-        print(json.dumps({"valid": errors == 0, "errors": errors, "warnings": warnings,
-                          "diagnostics": [item.to_dict() for item in diagnostics]}, indent=2))
+        emit_json({"valid": errors == 0, "errors": errors, "warnings": warnings,
+                   "diagnostics": [item.to_dict() for item in diagnostics]})
         return EXIT_FAILURE if errors else EXIT_OK
 
     out.info("Pabrikon Icon Theme Validator\n")
@@ -263,10 +411,10 @@ def cmd_info(args: argparse.Namespace, out: Output) -> int:
     """Print project summary data as text or machine-readable JSON."""
     info = project_info(Project.load(Path(args.path)))
     if args.json:
-        print(json.dumps(info, indent=2))
+        emit_json(info)
     else:
         for line in format_info(info):
-            print(line)
+            out.info(line)
     return EXIT_OK
 
 
@@ -274,10 +422,10 @@ def cmd_list(args: argparse.Namespace, out: Output) -> int:
     """List project icons, directories, aliases, or generated files."""
     items = list_items(Project.load(Path(args.path)), args.kind)
     if args.json:
-        print(json.dumps(items, indent=2))
+        emit_json(items)
     else:
         for item in items:
-            print(item)
+            out.info(item)
     return EXIT_OK
 
 
@@ -288,6 +436,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Show detailed output")
     common.add_argument("-q", "--quiet", action="store_true", default=argparse.SUPPRESS,
                         help="Only show errors")
+    common.add_argument("--json", action="store_true", default=argparse.SUPPRESS,
+                        help="Print machine-readable JSON output")
     common.add_argument("--debug", action="store_true", default=argparse.SUPPRESS,
                         help="Show tracebacks for unexpected errors")
 
@@ -310,7 +460,6 @@ def build_parser() -> argparse.ArgumentParser:
     init.set_defaults(handler=cmd_init)
 
     validate = add_command("validate", "Check configuration, sources, theme metadata, aliases and build output")
-    validate.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     validate.set_defaults(handler=cmd_validate)
 
     build = add_command("build", "Render icons and assemble the theme in build/")
@@ -347,14 +496,12 @@ def build_parser() -> argparse.ArgumentParser:
     aliases.set_defaults(handler=cmd_aliases)
 
     info = add_command("info", "Show project summary")
-    info.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     info.set_defaults(handler=cmd_info)
 
     list_command = commands.add_parser("list", help="List icons, directories, aliases or generated files",
                                        parents=[common])
     list_command.add_argument("kind", nargs="?", choices=LIST_KINDS, default="icons")
     list_command.add_argument("path", nargs="?", default=".", help="Project directory (default: current)")
-    list_command.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     list_command.set_defaults(handler=cmd_list)
 
     theme = commands.add_parser("theme", help="Manage index.theme metadata", parents=[common])
@@ -378,20 +525,34 @@ def main(argv: list[str] | None = None) -> int:
     except SystemExit as exc:  # argparse exits for --help, --version and usage errors
         return int(exc.code or 0)
 
+    args.json = getattr(args, "json", False)
     out = Output(verbose=getattr(args, "verbose", False), quiet=getattr(args, "quiet", False))
     try:
         return args.handler(args, out)
     except PabrikonError as exc:
-        out.error(exc.message, exc.hint)
+        if args.json:
+            json_error(args, exc.message, exc.hint)
+        else:
+            out.error(exc.message, exc.hint)
         return exc.exit_code
     except OSError as exc:
         if getattr(args, "debug", False):
             raise
         location = f": {exc.filename}" if exc.filename else ""
-        out.error(f"{exc.strerror or exc}{location}", "Check that the path exists and you have permission to access it.")
+        message = f"{exc.strerror or exc}{location}"
+        hint = "Check that the path exists and you have permission to access it."
+        if args.json:
+            json_error(args, message, hint)
+        else:
+            out.error(message, hint)
         return EXIT_FAILURE
     except Exception as exc:
         if getattr(args, "debug", False):
             raise
-        out.error(f"unexpected internal error: {exc!r}", "Re-run with --debug to see the traceback and report it as a bug.")
+        message = f"unexpected internal error: {exc!r}"
+        hint = "Re-run with --debug to see the traceback and report it as a bug."
+        if args.json:
+            json_error(args, message, hint)
+        else:
+            out.error(message, hint)
         return EXIT_FAILURE

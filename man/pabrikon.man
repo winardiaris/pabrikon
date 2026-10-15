@@ -118,10 +118,10 @@ against the project configuration.
 Show the installed Pabrikon version.
 .TP
 .B -v, --verbose
-Show detailed operation output.
+Show per-file details where the command provides them.
 .TP
 .B -q, --quiet
-Suppress normal output; errors remain visible.
+Suppress normal text output; errors remain visible on standard error.
 .TP
 .B --debug
 Show a traceback for unexpected errors.
@@ -152,7 +152,9 @@ Select generated files for clean: build, png, svg, or symlink.
 Replace source SVGs with validated optimized results (optimize only).
 .TP
 .B --json
-Print machine-readable output for validate, info, or list.
+Print one machine-readable JSON value. Available for all commands, including
+nested commands. Errors are reported as JSON and preserve the command exit
+code. JSON output is written even when --quiet is also specified.
 .SH PROJECT LAYOUT
 .nf
 my-theme/

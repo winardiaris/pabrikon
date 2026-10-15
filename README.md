@@ -22,7 +22,7 @@ The installer requires Python 3.12 or newer and installs Pabrikon into a
 user-owned virtual environment under `~/.local/share/pabrikon`, with the
 `pabrikon` command linked from `~/.local/bin`. It does not use `sudo` or edit
 shell startup files. If prompted, add `~/.local/bin` to your `PATH`. Override
-the install locations with `PABRIKON_HOME` and `PABRIKON_BIN_DIR` environment
+install locations with `PABRIKON_HOME` and `PABRIKON_BIN_DIR` environment
 variables. To install with pip instead, run `python3.12 -m pip install .`.
 
 For development and tests:
@@ -35,7 +35,7 @@ PYTHONPATH=src pytest
 ## Quick start
 
 Initialize a theme project, add SVG files under a context's `scalable/`
-directory, then validate and build it:
+directory, then validate, and build it:
 
 ```bash
 pabrikon init my-theme
@@ -176,14 +176,14 @@ implemented in the current CLI.
 
 ```text
 pabrikon init [TARGET] [--name NAME]
-pabrikon validate [PATH] [--json]
+pabrikon validate [PATH]
 pabrikon build [PATH] [--all] [--size N] [--sizes N,N] [--directory DIR] [--icon NAME] [--dry-run]
 pabrikon clean [PATH] [--type build|png|svg|symlink] [--dry-run]
 pabrikon aliases build [PATH] [--dry-run]
 pabrikon optimize [PATH] [--dry-run] [--in-place]
 pabrikon package [PATH] [--dry-run]
-pabrikon info [PATH] [--json]
-pabrikon list [icons|directories|aliases|generated] [PATH] [--json]
+pabrikon info [PATH]
+pabrikon list [icons|directories|aliases|generated] [PATH]
 pabrikon theme init [PATH] [--force]
 pabrikon theme show [PATH]
 pabrikon theme validate [PATH]
@@ -192,6 +192,15 @@ pabrikon theme validate [PATH]
 Run `pabrikon --help` or `pabrikon COMMAND --help` for details. Packaging
 requires a successful build and valid generated outputs. `--force` on
 `pabrikon theme init` allows replacing an existing `index.theme`.
+
+All commands accept `--verbose`, `--quiet`, and `--json` (as well as `-v` and
+`-q`). Verbose mode adds per-file details where available. Quiet mode suppresses
+normal text while errors remain on standard error. JSON mode writes one
+machine-readable value to standard output; command errors use an object with
+`command`, `ok: false`, and an `error` message, and retain the command's normal
+exit code. JSON output takes precedence over quiet mode. These options can be
+placed before or after the command, including nested commands such as
+`pabrikon theme show --json`.
 
 `pabrikon validate` checks the TOML configuration, `index.theme`, source SVGs,
 aliases, and existing generated files. `pabrikon build` also writes the
@@ -226,9 +235,9 @@ docker run --rm -v "$PWD/my-theme:/workspace" -w /workspace pabrikon validate .
 The current CLI includes project initialization, validation, building,
 cleaning, alias generation, theme metadata, project information and listing,
 SVG optimization, and tar.gz packaging. Importing an existing remote project
-is not implemented yet. Legacy CSV aliases have been replaced by TOML aliases;
+is not implemented yet. TOML aliases have replaced legacy CSV aliases;
 there is no automatic importer for external CSV mapping files. Browser preview
-is a later roadmap feature.
+is the latest roadmap feature.
 
 ### Freedesktop Icon Theme specification coverage
 

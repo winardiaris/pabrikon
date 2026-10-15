@@ -72,3 +72,11 @@ def test_invalid_configuration_is_reported(tmp_path: Path, content: str, expecte
 def test_missing_configuration_is_config_error(tmp_path: Path) -> None:
     with pytest.raises(ConfigError, match="not found"):
         load_config(tmp_path / "pabrikon.toml")
+
+
+def test_config_in_data_directory_defaults_name_from_project_root(tmp_path: Path) -> None:
+    config_path = tmp_path / "my-theme" / "data" / "pabrikon.toml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("[theme]\nname = \"My Theme\"\n", encoding="utf-8")
+
+    assert load_config(config_path).name == "my-theme"

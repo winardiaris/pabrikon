@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from .aliases import load_aliases, resolve_aliases
+from .config import CONFIG_FILE
 from .diagnostics import ERROR, WARNING, Diagnostic, error, warning
 from .project import SOURCE_SUBDIR, Project, is_valid_icon_name, walk_files
 from .svg import check_svg
@@ -45,7 +46,7 @@ def check_icon_directories(project: Project) -> list[Diagnostic]:
             continue
         parts = path.relative_to(project.icons_dir).parts
         if parts[0] not in enabled:
-            found.append(warning(label, f"directory {parts[0]!r} is not enabled in pabrikon.toml; file is ignored"))
+            found.append(warning(label, f"directory {parts[0]!r} is not enabled in {CONFIG_FILE}; file is ignored"))
         elif len(parts) != 3 or parts[1] != SOURCE_SUBDIR or path.suffix != ".svg":
             found.append(warning(label, f"orphaned file; sources must be icons/{parts[0]}/{SOURCE_SUBDIR}/<name>.svg"))
     return found

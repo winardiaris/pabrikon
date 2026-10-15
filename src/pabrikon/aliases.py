@@ -5,6 +5,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from .config import CONFIG_FILE
 from .diagnostics import Diagnostic, error
 from .errors import ConfigError, PabrikonError
 from .project import Project, is_valid_icon_name, walk_files
@@ -78,7 +79,7 @@ def resolve_aliases(project: Project, aliases: list[Alias]) -> tuple[dict[str, s
 
     for alias in aliases:
         if alias.context not in directories or alias.target_context not in directories:
-            problems.append(error(label, f"{alias.key} -> {alias.target_key}: directory is not enabled in pabrikon.toml"))
+            problems.append(error(label, f"{alias.key} -> {alias.target_key}: directory is not enabled in {CONFIG_FILE}"))
             continue
         if not is_valid_icon_name(alias.name) or not is_valid_icon_name(alias.target_name):
             problems.append(error(label, f"{alias.key} -> {alias.target_key}: invalid icon name"))

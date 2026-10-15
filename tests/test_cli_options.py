@@ -103,7 +103,7 @@ def test_quiet_suppresses_normal_output_but_keeps_errors(
     assert main(["info", str(project_root), "--quiet"]) == 0
     assert capsys.readouterr().out == ""
 
-    (project_root / "pabrikon.toml").write_text("[project\n", encoding="utf-8")
+    (project_root / "data" / "pabrikon.toml").write_text("[project\n", encoding="utf-8")
     assert main(["validate", str(project_root), "--quiet"]) == 2
     captured = capsys.readouterr()
     assert captured.out == ""

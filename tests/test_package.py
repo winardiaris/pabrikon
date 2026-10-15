@@ -15,7 +15,7 @@ from pabrikon.project import Project
 
 
 def build_svg_theme(root: Path, *, alias: bool = False) -> Project:
-    config_path = root / "pabrikon.toml"
+    config_path = root / "data" / "pabrikon.toml"
     config = load_config(config_path)
     config.build.sizes = [16]
     config.build.formats = ["svg"]

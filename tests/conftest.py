@@ -54,8 +54,8 @@ def fake_renderer(monkeypatch: pytest.MonkeyPatch) -> FakeRenderer:
 def write_config_sizes(root: Path, sizes: list[int], formats: list[str] | None = None) -> None:
     from pabrikon.config import load_config, write_config
 
-    config = load_config(root / "pabrikon.toml")
+    config = load_config(root / "data" / "pabrikon.toml")
     config.build.sizes = sizes
     if formats is not None:
         config.build.formats = formats
-    write_config(root / "pabrikon.toml", config)
+    write_config(root / "data" / "pabrikon.toml", config)

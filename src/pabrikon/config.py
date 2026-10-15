@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .errors import ConfigError
 
-CONFIG_FILE = "pabrikon.toml"
+CONFIG_FILE = "data/pabrikon.toml"
 
 DEFAULT_DIRECTORIES = [
     "actions",
@@ -169,7 +169,7 @@ def parse_config(data: dict, default_name: str) -> ProjectConfig:
     )
 
 
-def load_config(path: Path) -> ProjectConfig:
+def load_config(path: Path, *, default_name: str | None = None) -> ProjectConfig:
     """Load a project's TOML configuration and translate parse errors into actionable errors."""
     if not path.is_file():
         raise ConfigError(
@@ -184,7 +184,10 @@ def load_config(path: Path) -> ProjectConfig:
     except OSError as exc:
         raise ConfigError(f"cannot read {path}: {exc.strerror}") from exc
     try:
-        return parse_config(data, path.parent.resolve().name)
+        if default_name is None:
+            project_root = path.parent.parent if path.parent.name == "data" else path.parent
+            default_name = project_root.resolve().name
+        return parse_config(data, default_name)
     except ConfigError as exc:
         exc.message = f"{path.name}: {exc.message}"
         raise

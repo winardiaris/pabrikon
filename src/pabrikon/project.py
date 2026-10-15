@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .config import CONFIG_FILE, ProjectConfig, is_valid_name, load_config, write_config
-from .errors import PabrikonError, UsageError
+from .errors import ConfigError, PabrikonError, UsageError
 from .theme import render_index_theme
 
 SOURCE_SUBDIR = "scalable"
@@ -64,7 +64,14 @@ class Project:
     def load(cls, path: Path) -> "Project":
         """Resolve a project root and load its Pabrikon configuration."""
         root = path.resolve()
-        return cls(root=root, config=load_config(root / CONFIG_FILE))
+        config_path = root / CONFIG_FILE
+        old_config_path = root / "pabrikon.toml"
+        if not config_path.is_file() and old_config_path.is_file():
+            raise ConfigError(
+                f"configuration found at {old_config_path}; Pabrikon now expects {config_path}",
+                hint=f"Move the file to {CONFIG_FILE} and try again.",
+            )
+        return cls(root=root, config=load_config(config_path, default_name=root.name))
 
     @property
     def icons_dir(self) -> Path:
@@ -148,10 +155,17 @@ def init_project(target: Path, name: str | None = None) -> tuple[Path, list[Path
         )
     if root.exists() and not root.is_dir():
         raise PabrikonError(f"{root} exists and is not a directory")
-    if (root / CONFIG_FILE).exists():
+    if (root / "data").is_symlink():
+        raise PabrikonError(f"{root / 'data'} is a symbolic link; refusing to write project files through it")
+    if (root / CONFIG_FILE).exists() or (root / CONFIG_FILE).is_symlink():
         raise PabrikonError(
             f"{root} is already a Pabrikon project ({CONFIG_FILE} exists)",
             hint="Edit the existing configuration instead of re-initializing.",
+        )
+    if (root / "pabrikon.toml").is_file():
+        raise PabrikonError(
+            f"root-level pabrikon.toml found in {root}",
+            hint=f"Move it to {CONFIG_FILE} before initializing this project.",
         )
 
     config = ProjectConfig.default(project_name)

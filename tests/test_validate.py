@@ -47,7 +47,7 @@ def test_missing_configuration_exits_2(tmp_path: Path, capsys: pytest.CaptureFix
 
 
 def test_invalid_toml_json_output_stays_valid(project_root: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    (project_root / "pabrikon.toml").write_text("[project\n", encoding="utf-8")
+    (project_root / "data" / "pabrikon.toml").write_text("[project\n", encoding="utf-8")
 
     code, report = run_json(project_root, capsys)
 
@@ -83,7 +83,7 @@ def test_human_output_lists_warnings_and_errors(project_root: Path, capsys: pyte
 
 def test_strict_mode_turns_warnings_into_errors(project_root: Path, capsys: pytest.CaptureFixture[str]) -> None:
     add_svg(project_root, "apps", "no-viewbox", '<svg xmlns="http://www.w3.org/2000/svg"/>')
-    config = project_root / "pabrikon.toml"
+    config = project_root / "data" / "pabrikon.toml"
     config.write_text(config.read_text(encoding="utf-8").replace("strict = false", "strict = true"), encoding="utf-8")
 
     code, report = run_json(project_root, capsys)

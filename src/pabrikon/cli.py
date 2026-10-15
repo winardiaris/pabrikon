@@ -1,7 +1,13 @@
+# PYTHON_ARGCOMPLETE_OK
 from __future__ import annotations
 
 import argparse
+import argcomplete
 import json
+import os
+import shlex
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -11,10 +17,11 @@ from .errors import EXIT_FAILURE, EXIT_OK, ConfigError, PabrikonError
 from .aliases import AliasLink, apply_alias_links, load_aliases, plan_alias_links, resolve_aliases
 from .build import build_project, parse_size_values
 from .clean import CLEAN_TYPES, apply_clean, plan_clean
+from .config import CONFIG_FILE
 from .info import LIST_KINDS, format_info, list_items, project_info
 from .optimize import optimize_project
 from .package import package_project
-from .project import Project, init_project
+from .project import ALIASES_TEMPLATE, Project, init_project
 from .theme import render_index_theme, validate_index_theme
 from .validate import validate_project
 from .diagnostics import ERROR, WARNING, Diagnostic
@@ -68,12 +75,40 @@ def json_error(args: argparse.Namespace, message: str, hint: str | None = None) 
     command = args.command
     if command == "theme":
         command = f"theme {args.theme_command}"
+    elif command == "config":
+        command = f"config {args.config_command}"
     elif command == "aliases":
         command = f"aliases {args.alias_command}"
     error = {"message": message}
     if hint:
         error["hint"] = hint
     emit_json({"command": command, "ok": False, "error": error})
+
+
+def resolve_editor_command(requested: str | None) -> list[str]:
+    """Resolve a configured terminal editor without invoking a shell."""
+    candidates = [requested] if requested else [os.environ.get("VISUAL"), os.environ.get("EDITOR"), "vim", "nano"]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        try:
+            command = shlex.split(candidate)
+        except ValueError as exc:
+            raise PabrikonError(f"invalid editor command: {exc}") from exc
+        if not command:
+            continue
+        executable = shutil.which(command[0])
+        if executable:
+            return [executable, *command[1:]]
+        if requested:
+            raise PabrikonError(
+                f"editor not found: {command[0]}",
+                hint="Install vim or nano, set EDITOR or VISUAL, or pass --editor.",
+            )
+    raise PabrikonError(
+        "no terminal editor found",
+        hint="Install vim or nano, set EDITOR or VISUAL, or pass --editor.",
+    )
 
 
 def cmd_init(args: argparse.Namespace, out: Output) -> int:
@@ -93,6 +128,37 @@ def cmd_init(args: argparse.Namespace, out: Output) -> int:
     return EXIT_OK
 
 
+def cmd_config_edit(args: argparse.Namespace, out: Output) -> int:
+    """Open the existing project configuration without parsing its TOML."""
+    root = Path(args.path).resolve()
+    config_path = root / CONFIG_FILE
+    data_dir = root / "data"
+    if data_dir.is_symlink() or config_path.is_symlink():
+        raise PabrikonError(f"refusing to edit symbolic link {config_path}")
+    if config_path.exists() and not config_path.is_file():
+        raise PabrikonError(f"cannot edit {config_path}: it is not a regular file")
+    if not config_path.is_file():
+        raise ConfigError(
+            f"configuration file not found: {config_path}",
+            hint="Run `pabrikon init` to create a project configuration.",
+        )
+
+    editor = resolve_editor_command(args.editor)
+    if not args.json:
+        out.info(f"Opening {config_path} with {Path(editor[0]).name}...")
+    result = subprocess.run([*editor, str(config_path)], check=False)
+    if result.returncode:
+        raise PabrikonError(f"editor exited with status {result.returncode}")
+    if args.json:
+        emit_json({
+            "command": "config edit",
+            "ok": True,
+            "path": CONFIG_FILE,
+            "editor": Path(editor[0]).name,
+        })
+    return EXIT_OK
+
+
 def cmd_theme(args: argparse.Namespace, out: Output) -> int:
     """Handle theme metadata generation, display, and validation commands."""
     project = Project.load(Path(args.path))
@@ -100,7 +166,7 @@ def cmd_theme(args: argparse.Namespace, out: Output) -> int:
         if project.index_theme.exists() and not args.force:
             raise PabrikonError(
                 f"{project.index_theme.name} already exists",
-                hint="Use `pabrikon theme init --force` to regenerate it from pabrikon.toml.",
+                hint=f"Use `pabrikon theme init --force` to regenerate it from {CONFIG_FILE}.",
             )
         project.index_theme.write_text(render_index_theme(project.config), encoding="utf-8")
         if args.json:
@@ -118,6 +184,27 @@ def cmd_theme(args: argparse.Namespace, out: Output) -> int:
             emit_json({"command": "theme show", "ok": True, "path": "index.theme", "content": content})
         else:
             out.write(content)
+        return EXIT_OK
+    if args.theme_command == "edit":
+        editor = resolve_editor_command(args.editor)
+        if project.index_theme.is_symlink():
+            raise PabrikonError(f"refusing to edit symbolic link {project.index_theme}")
+        if project.index_theme.exists() and not project.index_theme.is_file():
+            raise PabrikonError(f"cannot edit {project.index_theme}: it is not a regular file")
+        if not project.index_theme.exists():
+            project.index_theme.write_text(render_index_theme(project.config), encoding="utf-8")
+        if not args.json:
+            out.info(f"Opening {project.index_theme} with {Path(editor[0]).name}...")
+        result = subprocess.run([*editor, str(project.index_theme)], check=False)
+        if result.returncode:
+            raise PabrikonError(f"editor exited with status {result.returncode}")
+        if args.json:
+            emit_json({
+                "command": "theme edit",
+                "ok": True,
+                "path": "index.theme",
+                "editor": Path(editor[0]).name,
+            })
         return EXIT_OK
     diagnostics = validate_index_theme(project.index_theme, project.config)
     if args.json:
@@ -222,6 +309,28 @@ def cmd_build(args: argparse.Namespace, out: Output) -> int:
 def cmd_aliases(args: argparse.Namespace, out: Output) -> int:
     """Resolve configured aliases and create or preview generated links."""
     project = Project.load(Path(args.path))
+    if args.alias_command == "edit":
+        editor = resolve_editor_command(args.editor)
+        if project.data_dir.is_symlink() or project.aliases_file.is_symlink():
+            raise PabrikonError(f"refusing to edit symbolic link {project.aliases_file}")
+        if project.aliases_file.exists() and not project.aliases_file.is_file():
+            raise PabrikonError(f"cannot edit {project.aliases_file}: it is not a regular file")
+        if not project.aliases_file.exists():
+            project.data_dir.mkdir(parents=True, exist_ok=True)
+            project.aliases_file.write_text(ALIASES_TEMPLATE, encoding="utf-8")
+        if not args.json:
+            out.info(f"Opening {project.aliases_file} with {Path(editor[0]).name}...")
+        result = subprocess.run([*editor, str(project.aliases_file)], check=False)
+        if result.returncode:
+            raise PabrikonError(f"editor exited with status {result.returncode}")
+        if args.json:
+            emit_json({
+                "command": "aliases edit",
+                "ok": True,
+                "path": "data/aliases.toml",
+                "editor": Path(editor[0]).name,
+            })
+        return EXIT_OK
     project.check_build_dir()
     resolved, problems = resolve_aliases(project, load_aliases(project))
     links = plan_alias_links(project, resolved)
@@ -459,6 +568,14 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--name", help="Project name (default: target directory name)")
     init.set_defaults(handler=cmd_init)
 
+    config = commands.add_parser("config", help="Manage project configuration", parents=[common])
+    config_commands = config.add_subparsers(dest="config_command", required=True, metavar="ACTION")
+    config_edit = config_commands.add_parser("edit", help="Open data/pabrikon.toml in a terminal editor",
+                                             parents=[common])
+    config_edit.add_argument("path", nargs="?", default=".", help="Project directory (default: current)")
+    config_edit.add_argument("--editor", help="Editor command (default: VISUAL, EDITOR, vim, then nano)")
+    config.set_defaults(handler=cmd_config_edit)
+
     validate = add_command("validate", "Check configuration, sources, theme metadata, aliases and build output")
     validate.set_defaults(handler=cmd_validate)
 
@@ -489,6 +606,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     aliases = commands.add_parser("aliases", help="Manage icon aliases", parents=[common])
     alias_commands = aliases.add_subparsers(dest="alias_command", required=True, metavar="ACTION")
+    alias_edit = alias_commands.add_parser("edit", help="Open data/aliases.toml in a terminal editor",
+                                           parents=[common])
+    alias_edit.add_argument("path", nargs="?", default=".", help="Project directory (default: current)")
+    alias_edit.add_argument("--editor", help="Editor command (default: VISUAL, EDITOR, vim, then nano)")
     alias_build = alias_commands.add_parser("build", help="Create alias symlinks in build/ from data/aliases.toml",
                                             parents=[common])
     alias_build.add_argument("path", nargs="?", default=".", help="Project directory (default: current)")
@@ -506,10 +627,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     theme = commands.add_parser("theme", help="Manage index.theme metadata", parents=[common])
     theme_commands = theme.add_subparsers(dest="theme_command", required=True, metavar="ACTION")
-    theme_init = theme_commands.add_parser("init", help="Write index.theme from pabrikon.toml", parents=[common])
+    theme_init = theme_commands.add_parser("init", help=f"Write index.theme from {CONFIG_FILE}", parents=[common])
     theme_init.add_argument("--force", action="store_true", help="Overwrite an existing index.theme")
     theme_commands.add_parser("show", help="Print the effective index.theme", parents=[common])
-    theme_commands.add_parser("validate", help="Check index.theme against pabrikon.toml", parents=[common])
+    theme_edit = theme_commands.add_parser("edit", help="Open index.theme in a terminal editor", parents=[common])
+    theme_edit.add_argument("--editor", help="Editor command (default: VISUAL, EDITOR, vim, then nano)")
+    theme_commands.add_parser("validate", help=f"Check index.theme against {CONFIG_FILE}", parents=[common])
     for action in theme_commands.choices.values():
         action.add_argument("path", nargs="?", default=".", help="Project directory (default: current)")
     theme.set_defaults(handler=cmd_theme)
@@ -520,6 +643,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments, run the selected command, and return its documented exit code."""
     parser = build_parser()
+    argcomplete.autocomplete(parser)
     try:
         args = parser.parse_args(argv)
     except SystemExit as exc:  # argparse exits for --help, --version and usage errors

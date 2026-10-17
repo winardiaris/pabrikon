@@ -2,9 +2,10 @@
 
 Pabrikon is a Python CLI toolkit for developing Linux icon themes. It creates
 and validates projects, renders SVG sources into theme assets, manages aliases,
-optimizes SVG files, and packages completed themes. Remote project adoption is
-still planned. Aliases use `data/aliases.toml`; bundled legacy CSV alias tables
-and their management commands have been removed.
+optimizes SVG files, and packages completed themes. It can be used manually with
+an existing icon-theme repository, but automatic project adoption and layout
+normalization are still planned. Aliases use `data/aliases.toml`; bundled legacy
+CSV alias tables and their management commands have been removed.
 
 ## Requirements
 
@@ -28,9 +29,13 @@ variables. To install with pip instead, run `python3.12 -m pip install .`.
 For development and tests:
 
 ```bash
-python -m pip install pytest
-PYTHONPATH=src pytest
+python -m pip install -e ".[dev]"
+pytest
 ```
+
+The end-to-end acceptance test also needs `rsvg-convert` (librsvg) and
+`svgcleaner`; it is skipped when either executable is unavailable. CI installs
+both tools and runs the full suite, Ruff, mypy, and a wheel build.
 
 ## Quick start
 
@@ -51,6 +56,29 @@ creates optimized copies under `dist/optimized/icons/` and preserves source
 files by default. `--in-place` replaces source SVGs only after each optimized
 file passes validation. `pabrikon clean` removes generated files from `build/`
 and never removes the source tree.
+
+### Try the complete workflow
+
+This creates a small theme and runs the main workflow. Install `rsvg-convert`
+and `svgcleaner` first; `optimize` requires the latter.
+
+```bash
+pabrikon init demo-theme
+mkdir -p demo-theme/icons/apps/scalable
+cat > demo-theme/icons/apps/scalable/example.svg <<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <rect width="16" height="16" fill="#369" />
+</svg>
+SVG
+pabrikon validate demo-theme
+pabrikon build demo-theme
+pabrikon optimize demo-theme
+pabrikon package demo-theme
+pabrikon clean demo-theme --dry-run
+```
+
+The `clean` preview lists generated files without removing them. To remove the
+build output after reviewing the list, run `pabrikon clean demo-theme`.
 
 ## Recommended theme project layout
 
@@ -182,13 +210,55 @@ command creates it with a commented example template before opening it.
 Validation reports missing targets, cycles, aliases that shadow real icons,
 and aliases in contexts that are not enabled in `data/pabrikon.toml`.
 
-For an existing project, `pabrikon init PATH` can add the starter files when
-`data/pabrikon.toml` does not already exist, while preserving unrelated files.
-If the old root-level `pabrikon.toml` exists, move it to `data/pabrikon.toml`;
-Pabrikon reports the expected location instead of creating a second config.
-It does not yet infer settings from a remote repository or reorganize existing
-icons automatically. That adoption workflow is specified in the PRD but is not
-implemented in the current CLI.
+### Use Pabrikon with an existing icon theme
+
+You can prepare an existing local checkout manually. Work on a branch or
+backup, and run `pabrikon init` against the actual theme root (some repositories
+keep it in a nested directory). Initialization adds Pabrikon starter files and
+missing configured directories; it preserves existing files and does not scan,
+move, or rewrite existing icons.
+
+```bash
+# Replace these paths with the checkout and theme root you have.
+THEME_ROOT="$PWD/upstream-theme"
+pabrikon init "$THEME_ROOT"
+```
+
+If the repository already has `data/pabrikon.toml`, do not initialize it again;
+edit it with `pabrikon config edit "$THEME_ROOT"`. If its Pabrikon config is at
+the repository root, move it to `data/pabrikon.toml` first. Then copy the
+original scalable SVGs into the v2 source layout, one icon context at a time:
+
+```bash
+mkdir -p "$THEME_ROOT/icons/apps/scalable"
+find "$THEME_ROOT/OldTheme/apps/scalable" -type f -name '*.svg' \
+  -exec cp -p {} "$THEME_ROOT/icons/apps/scalable/" \;
+```
+
+Replace `OldTheme/apps` with the source directory used by that theme, and
+repeat for each context enabled in `data/pabrikon.toml`. Check for duplicate
+SVG basenames first: the v2 source layout is flat, so same-named files would
+overwrite one another when copied into one context. Copy rather than move the
+files so the original layout remains available for comparison. Pabrikon does
+not import raster assets, infer configuration from an upstream `index.theme`,
+discover nested theme roots, or normalize folders automatically.
+
+Review `[build.directories].enabled` and the theme metadata in
+`data/pabrikon.toml`. If you want to regenerate an existing root `index.theme`
+from that configuration, explicitly run `pabrikon theme init "$THEME_ROOT"
+--force`; this replaces the existing metadata file. Otherwise, edit the file
+directly with `pabrikon theme edit "$THEME_ROOT"`. Then check and build the
+prepared project:
+
+```bash
+pabrikon validate "$THEME_ROOT"
+pabrikon build "$THEME_ROOT"
+pabrikon package "$THEME_ROOT"
+```
+
+Inspect the generated `build/` tree and package before deciding whether to
+remove or reorganize any upstream files. Automated repository analysis and
+safe layout normalization remain planned, as described in the PRD.
 
 ## Commands
 
@@ -228,7 +298,7 @@ pabrikon theme edit . --editor nano
 `pabrikon config edit` uses the same editor selection and only opens an
 existing `data/pabrikon.toml`.
 
-ta### Shell autocomplete
+### Shell autocomplete
 
 Pabrikon supports argument completion in Bash and Zsh through `argcomplete`.
 After installing Pabrikon, add the matching line to your shell startup file:
@@ -288,10 +358,11 @@ docker run --rm -v "$PWD/my-theme:/workspace" -w /workspace pabrikon validate .
 
 The current CLI includes project initialization, validation, building,
 cleaning, alias generation, theme metadata, project information and listing,
-SVG optimization, and tar.gz packaging. Importing an existing remote project
-is not implemented yet. TOML aliases have replaced legacy CSV aliases;
-there is no automatic importer for external CSV mapping files. Browser preview
-is the latest roadmap feature.
+SVG optimization, and tar.gz packaging. Manual preparation of an existing
+theme is documented above; automatic analysis and layout normalization are not
+implemented yet. TOML aliases have replaced legacy CSV aliases; there is no
+automatic importer for external CSV mapping files. Browser preview remains a
+roadmap feature.
 
 ### Freedesktop Icon Theme specification coverage
 

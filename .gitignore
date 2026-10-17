@@ -11,6 +11,9 @@ docs
 docs/*
 !docs/PRD/
 docs/PRD/*
+# Keep the active product requirements and implementation status versioned.
+!docs/PRD/PRD-pabrikon.md
+!docs/PRD/STATUS-IMPLEMENTASI.md
 AGENTS.md
 CLAUDE.md
 development-test/

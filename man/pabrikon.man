@@ -1,4 +1,4 @@
-.TH PABRIKON 1 "2026-10-07" "Pabrikon" "User Commands"
+.TH PABRIKON 1 "2026-10-17" "Pabrikon" "User Commands"
 .SH NAME
 pabrikon \- develop, validate, build, and package Linux icon themes
 .SH SYNOPSIS
@@ -20,6 +20,31 @@ Generated theme files are written under
 .IR build/ ,
 and package archives are written under
 .IR dist/ .
+.SH INSTALLATION
+Python 3.12 or newer is required. From a Pabrikon source checkout, install for
+the current user with:
+.nf
+\&./install.sh
+.fi
+.PP
+The installer places the environment under
+.B ~/.local/share/pabrikon
+and links the command from
+.BR ~/.local/bin .
+Add that directory to
+.B PATH
+if needed. The installer does not use sudo or modify shell startup files. A
+pip installation is also available:
+.nf
+python3.12 -m pip install .
+.fi
+.PP
+Install
+.B rsvg-convert
+from librsvg to render PNG icons and
+.B svgcleaner
+to optimize SVG files. The package installer does not install these system
+tools.
 .SH COMMANDS
 .TP
 .B init [TARGET] [--name NAME]
@@ -241,10 +266,60 @@ The
 .B build/
 directory is created by the first build and can be regenerated without
 changing the source tree.
+.SH EXISTING PROJECTS
+Pabrikon can be used manually with an existing icon-theme checkout. If
+.B data/pabrikon.toml
+does not exist, run
+.B pabrikon init
+with the actual theme root; some repositories store the theme in a nested
+directory. Initialization preserves existing files and creates missing
+Pabrikon starter files, but does not infer configuration or rearrange assets.
+.PP
+Copy original scalable SVGs into
+.B icons/<context>/scalable/
+for each enabled context. For example:
+.nf
+mkdir -p /path/to/theme-root/icons/apps/scalable
+find /path/to/theme-root/ExistingTheme/apps/scalable -type f -name '*.svg' \\
+  -exec cp -p {} /path/to/theme-root/icons/apps/scalable/ \\\\;
+.fi
+.PP
+Adjust the source path for the theme and repeat for each context. Check for
+duplicate SVG basenames first; the target context is flat, so same-named files
+would overwrite each other. Copy rather than move the files so the original
+layout remains intact. Edit
+.B data/pabrikon.toml
+with
+.BR "pabrikon config edit /path/to/theme-root" .
+If that file already exists, edit it instead of running init again. If a
+Pabrikon config is at the repository root, move it to
+.B data/pabrikon.toml
+before initialization. Review the config and existing
+.B index.theme
+before building. To replace an existing
+.B index.theme
+from the config, explicitly use
+.BR "pabrikon theme init /path/to/theme-root --force" .
+.PP
+Pabrikon does not yet discover nested theme roots, infer settings from an
+upstream
+.BR index.theme ,
+import raster assets, or normalize the repository layout automatically.
 .SH EXAMPLES
 .TP
 Create a project:
 .B pabrikon init my-theme
+.TP
+Validate, build, and package it:
+.br
+.B pabrikon validate my-theme
+.br
+.B pabrikon build my-theme
+.br
+.B pabrikon package my-theme
+.TP
+Preview generated-file cleanup:
+.B pabrikon clean my-theme --dry-run
 .TP
 Validate the current project:
 .B pabrikon validate .
@@ -283,7 +358,10 @@ Validation or execution failed.
 .B 2
 Invalid command-line arguments or configuration.
 .SH LIMITATIONS
-Remote project adoption is not implemented yet. Pabrikon v2 uses
+Automatic project analysis and layout normalization are not implemented yet;
+see
+.BR "EXISTING PROJECTS" .
+Pabrikon v2 uses
 .B data/aliases.toml
 instead of the legacy CSV alias tables and does not import external CSV maps.
 Browser preview is not currently available.

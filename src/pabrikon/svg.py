@@ -13,7 +13,7 @@ class SvgCheck:
     has_viewbox: bool = False
 
 
-def parse_svg(path: Path) -> ET.ElementTree:
+def parse_svg(path: Path) -> ET.ElementTree[ET.Element[str]]:
     """Parse an SVG document while blocking external entity resolution."""
     # Python's bundled expat (>= 2.4.1) limits entity expansion, and
     # ElementTree never fetches external entities.

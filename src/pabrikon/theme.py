@@ -73,10 +73,17 @@ def render_index_theme(config: ProjectConfig) -> str:
     return "\n".join(lines) + "\n"
 
 
+class CaseSensitiveConfigParser(configparser.ConfigParser):
+    """Preserve the case-sensitive metadata keys required by index.theme."""
+
+    def optionxform(self, optionstr: str) -> str:
+        """Keep option spelling unchanged instead of normalizing keys to lowercase."""
+        return optionstr
+
+
 def parse_index_theme(text: str) -> configparser.ConfigParser:
     """Parse index.theme while preserving key case and disabling interpolation."""
-    parser = configparser.ConfigParser(interpolation=None, strict=True, comment_prefixes=("#",), delimiters=("=",))
-    parser.optionxform = str  # index.theme keys are case-sensitive
+    parser = CaseSensitiveConfigParser(interpolation=None, strict=True, comment_prefixes=("#",), delimiters=("=",))
     parser.read_string(text)
     return parser
 

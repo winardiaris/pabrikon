@@ -12,11 +12,23 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      - name: Install SVG toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cargo librsvg2-bin
+          cargo install svgcleaner --version 0.9.5 --locked --root "$RUNNER_TEMP/svgcleaner"
+          echo "$RUNNER_TEMP/svgcleaner/bin" >> "$GITHUB_PATH"
       - name: Install package and test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e . pytest
-      - name: Run tests
-        run: python -m pytest
+          python -m pip install -e ".[dev]"
       - name: Build wheel
         run: python -m pip wheel --no-deps . --wheel-dir "$RUNNER_TEMP/wheels"
+      - name: Lint and type-check
+        run: |
+          python -m ruff check src tests
+          python -m mypy
+      - name: Run tests
+        env:
+          PABRIKON_WHEEL_DIR: ${{ runner.temp }}/wheels
+        run: python -m pytest

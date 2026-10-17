@@ -1,206 +1,387 @@
-# Pabrikon 
-[![Build Status](https://travis-ci.org/winardiaris/pabrikon.svg?branch=master)](https://travis-ci.org/winardiaris/pabrikon)  [![GitLicense](https://gitlicense.com/badge/winardiaris/pabrikon)](https://gitlicense.com/license/winardiaris/pabrikon)
-    
+# Pabrikon
 
-Pabrikon can be run in all GNU/Linux distributions and designed to help
-GNU/Linux distro developers, especially for the artwork team to create and
-manage their own icons.
-
-The idea of Pabrikon was initiated by @herpiko, from artwork team in
-BlankOn Project. Currently, Pabrikon only a bash script but this will
-be very helpful to manage icons.
+Pabrikon is a Python CLI toolkit for developing Linux icon themes. It creates
+and validates projects, renders SVG sources into theme assets, manages aliases,
+optimizes SVG files, and packages completed themes. It can be used manually with
+an existing icon-theme repository, but automatic project adoption and layout
+normalization are still planned. Aliases use `data/aliases.toml`; bundled legacy
+CSV alias tables and their management commands have been removed.
 
 ## Requirements
 
-- [librsvg2-bin](https://wiki.gnome.org/Projects/LibRsvg)
-- [svgcleaner](https://sourceforge.net/projects/svgcleaner/)
+- Python 3.12 or newer
+- `rsvg-convert` from librsvg to render PNG icons
+- `svgcleaner` to optimize SVG icons
 
-## Directory structure
+Install Pabrikon from the repository root:
 
-In your working folder requires at least one of the following list:
-
-- actions/scalable/
-- animations/scalable/
-- apps/scalable/
-- categories/scalable/
-- devices/scalable/
-- emblems/scalable/
-- io/scalable/
-- mimetypes/scalable/
-- places/scalable/
-- status/scalable/
-- stock/scalable/
-- data/					<= `This contains CSV files of symlinks data`
-
-The `*.svg` files will be stored in the `scalable` folder.
-
-## Installation
-
-```
-$ curl https://raw.githubusercontent.com/winardiaris/pabrikon/master/install.sh | bash
+```bash
+./install.sh
 ```
 
-## Help
+The installer requires Python 3.12 or newer and installs Pabrikon into a
+user-owned virtual environment under `~/.local/share/pabrikon`, with the
+`pabrikon` command linked from `~/.local/bin`. It does not use `sudo` or edit
+shell startup files. If prompted, add `~/.local/bin` to your `PATH`. Override
+install locations with `PABRIKON_HOME` and `PABRIKON_BIN_DIR` environment
+variables. To install with pip instead, run `python3.12 -m pip install .`.
 
-```
-PABRIKON(1)    USERMANUAL    PABRIKON(1)
+For development and tests:
 
-NAME
-    pabrikon
-
-DESCRIPTION
-    Pabrikon can run on all GNU/Linux distributions and designed
-    to help GNU/Linux distro developers, especially for the artwork team
-    to create and manage their own icons.
-
-OPTION
-  -a, --all
-    force export from all files
-
-  -b, --build
-    build icon from svg to png
-
-  -c, --clean
-    clean project dir from png files
-
-  --comment
-    this for comment a new icon project
-
-  -d, --directory
-    select the type of directory icon project [ex:apps, categories, places,
-    etc..]
-
-  -h, --help
-    output usage information
-
-  -g, --makesvg
-    build icons in svg file
-
-  -l, --list
-    list file in current project
-
-  --makecsv
-    make csv file for icon project from symlink or pabrikon default
-
-  -p,--makepng
-    build icons in png file
-
-  -s,--makesym
-    build symbolic link file from csv file in data directory
-
-  --minizer
-    reduce the size of svg file
-
-  --name
-    naming a new project or name a new icon
-
-  --new
-    copy default icon svg file to new icon
-
-  --newproject
-    make a new project icon could be blank projects or from git url
-
-  --opencsv
-    open csv file on the project or pabrikon default
-
-  --source
-    source of --makecsv , --newproject , --opencsv
-
-  -t, --types
-    for --clean {default|png|symlink}
-    for --list {all|png|svg|symlink}
-
-  -u, --update
-    update pabrikon
-
-  --vaccum
-    vaccum size svg file with feature from Inkscape
-
-  -v, --verbose
-    increase verbosity
-
-  --version
-    show pabrikon version
-
-
-EXAMPLES
-  pabrikon --build
-    build icon to png in latest file modified
-
-  pabrikon --build --all
-    build icon to png all files
-
-  pabrikon --build --type=svg
-
-  pabrikon --clean
-    clean the project from png, symlink and svg file
-
-  pabrikon --clean --type=png
-    clean the project from png file
-
-  pabrikon --clean --type=symlink
-    clean the project from symlink file
-
-  pabrikon --clean --type=svg
-    clean the project from svg file
-
-  pabrikon -g
-  pabrikon --makesvg
-	build icons in svg file
-
-  pabrikon -g -a
-    build icon to png all files
-
-  pabrikon -h
-    show this help usage
-
-  pabrikon -l -t {all|png|svg|symlink}
-    show list file in current project
-
-  pabrikon --makecsv
-  pabrikon --makecsv --source=default
-    make csv file from symlink in current project
-
-  pabrikon --makecsv --source=pabrikon
-    copy csv file from default pabrikon to current project
-
-  pabrikon -s
-  pabrikon --makesym
-    build symbolic link file from csv file in data directory
-
-  pabrikon --makecsv --source=pabrikon
-    copy csv file from pabrikon default to current project
-
-  pabrikon -p
-  pabrikon --makepng
-    build icons in png file
-
-  pabrikon -p -a
-  pabrikon --makepng --all
-    build icon to png all files
-
-  pabrikon -n --name=NAME.svg --directory=places
-  pabrikon --new --name=NAME.svg --directory=places
-    copy default icon svg file to <directory>/scalable/<name>
-
-  pabrikon --newproject --name=NAME --comment="comment or description for icon"
-    make new blank project with <name> of icon
-
-  pabrikon --newproject --source=git-url-of-icon-project.git
-    make new project with source from git url
-
-  pabrikon --opencsv --name=apps
-    open csv file with name apps.csv in current icon project
-
-  pabrikon --opencsv --name=places --source=pabrikon
-    open csv file with name places.csv in pabrikon default data
-
-
+```bash
+python -m pip install -e ".[dev]"
+pytest
 ```
 
-# TODO it
+The end-to-end acceptance test also needs `rsvg-convert` (librsvg) and
+`svgcleaner`; it is skipped when either executable is unavailable. CI installs
+both tools and runs the full suite, Ruff, mypy, and a wheel build.
 
-In the future, Pabrikon will be extended to a GUI-based application with more
-features: a friendly interface to create a new project, import/export projects,
-one-on-one/many for export png, use Inkscape for editing, managing symlink,
-and many more.
+## Quick start
+
+Initialize a theme project, add SVG files under a context's `scalable/`
+directory, then validate, and build it:
+
+```bash
+pabrikon init my-theme
+cp firefox.svg my-theme/icons/apps/scalable/
+cd my-theme
+pabrikon validate
+pabrikon build
+pabrikon package
+```
+
+`pabrikon build --dry-run` previews planned outputs. `pabrikon optimize`
+creates optimized copies under `dist/optimized/icons/` and preserves source
+files by default. `--in-place` replaces source SVGs only after each optimized
+file passes validation. `pabrikon clean` removes generated files from `build/`
+and never removes the source tree.
+
+### Try the complete workflow
+
+This creates a small theme and runs the main workflow. Install `rsvg-convert`
+and `svgcleaner` first; `optimize` requires the latter.
+
+```bash
+pabrikon init demo-theme
+mkdir -p demo-theme/icons/apps/scalable
+cat > demo-theme/icons/apps/scalable/example.svg <<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <rect width="16" height="16" fill="#369" />
+</svg>
+SVG
+pabrikon validate demo-theme
+pabrikon build demo-theme
+pabrikon optimize demo-theme
+pabrikon package demo-theme
+pabrikon clean demo-theme --dry-run
+```
+
+The `clean` preview lists generated files without removing them. To remove the
+build output after reviewing the list, run `pabrikon clean demo-theme`.
+
+## Recommended theme project layout
+
+```text
+my-theme/
+├── README.md
+├── LICENSE                       # Optional; preserve upstream license files
+├── index.theme                   # Theme metadata generated from the config
+├── icons/                        # Editable source assets
+│   ├── actions/
+│   │   └── scalable/
+│   ├── apps/
+│   │   └── scalable/
+│   │       └── firefox.svg
+│   ├── categories/
+│   │   └── scalable/
+│   ├── devices/
+│   │   └── scalable/
+│   ├── places/
+│   │   └── scalable/
+│   └── status/
+│       └── scalable/
+├── data/
+│   ├── pabrikon.toml              # Project, theme, and build settings
+│   └── aliases.toml              # Optional symbolic icon aliases
+├── build/                        # Generated by `pabrikon build`
+│   ├── index.theme
+│   └── apps/
+│       ├── scalable/
+│       │   └── firefox.svg
+│       └── 48x48/
+│           └── firefox.png
+└── dist/                         # Packages and optimized copies
+    ├── optimized/
+    │   └── icons/
+    └── my-theme-1.0.0.tar.gz
+```
+
+The tree shows a project after adding an icon and running build, optimize, and
+package. A fresh project does not yet contain `build/` or package output.
+`pabrikon init` creates the configured source context directories, each with a
+`scalable/` folder. Put original SVGs in `icons/<context>/scalable/`; Pabrikon
+keeps generated assets in `build/`, separate from editable sources. Contexts
+and raster sizes are controlled by `data/pabrikon.toml`.
+
+## Project configuration
+
+`pabrikon init` writes `data/pabrikon.toml`. Edit its project and theme metadata,
+enabled icon contexts, generated formats, and raster sizes there. For example:
+
+```bash
+pabrikon config edit
+pabrikon config edit . --editor nano
+```
+
+The edit command opens an existing configuration in a terminal editor, selected
+from `--editor`, `$VISUAL`, `$EDITOR`, `vim`, then `nano`. It opens the file
+without parsing it first, so you can repair invalid TOML. If the file is
+missing, run `pabrikon init` to create it.
+
+```toml
+[project]
+name = "my-theme"
+version = "1.0.0"
+description = "A custom Linux icon theme"
+license = "GPL-3.0"
+
+[theme]
+name = "My Theme"
+comment = "A custom Linux icon theme"
+inherits = ["Adwaita"]
+
+[build]
+sizes = [16, 24, 32, 48, 64, 128, 256]
+formats = ["svg", "png"]
+
+[build.directories]
+enabled = ["apps", "categories", "devices", "places", "status"]
+
+[validation]
+strict = false
+```
+
+Sources go in `icons/<enabled-context>/scalable/<name>.svg`. The default
+formats are scalable SVG and PNG; configured sizes apply to PNG outputs.
+`validation.strict = true` treats validation warnings as errors. Icon names
+must start with a letter or digit and may also contain `.`, `_`, `+`, `@`, or
+`-`.
+
+## Icon aliases
+
+Aliases are optional. Define them in `data/aliases.toml`, with one TOML table
+per destination icon context. A value without `/` refers to an icon in the
+same context; `context/name` refers to an icon in another enabled context.
+Targets must match source SVGs under `icons/`.
+
+For example, if `icons/apps/scalable/firefox.svg`,
+`icons/places/scalable/user-home.svg`, and
+`icons/apps/scalable/accessories-calculator.svg` exist:
+
+```toml
+[apps]
+web-browser = "firefox"
+
+[places]
+folder-home = "user-home"
+
+[categories]
+applications-mathematics = "apps/accessories-calculator"
+```
+
+The example adds two aliases within their own context and one cross-context
+alias. During `pabrikon build`, Pabrikon creates relative symbolic links for
+each configured output format and raster size in `build/`; it does not alter
+the source SVGs. To preview or rebuild just the links after a build, use:
+
+```bash
+pabrikon aliases edit
+pabrikon aliases build --dry-run
+pabrikon aliases build
+pabrikon list aliases
+```
+
+`pabrikon aliases edit` opens `data/aliases.toml` in the selected terminal
+editor. It uses the same editor selection as `pabrikon theme edit`: `--editor`,
+`$VISUAL`, `$EDITOR`, `vim`, then `nano`. If the alias file is missing, the
+command creates it with a commented example template before opening it.
+
+Validation reports missing targets, cycles, aliases that shadow real icons,
+and aliases in contexts that are not enabled in `data/pabrikon.toml`.
+
+### Use Pabrikon with an existing icon theme
+
+You can prepare an existing local checkout manually. Work on a branch or
+backup, and run `pabrikon init` against the actual theme root (some repositories
+keep it in a nested directory). Initialization adds Pabrikon starter files and
+missing configured directories; it preserves existing files and does not scan,
+move, or rewrite existing icons.
+
+```bash
+# Replace these paths with the checkout and theme root you have.
+THEME_ROOT="$PWD/upstream-theme"
+pabrikon init "$THEME_ROOT"
+```
+
+If the repository already has `data/pabrikon.toml`, do not initialize it again;
+edit it with `pabrikon config edit "$THEME_ROOT"`. If its Pabrikon config is at
+the repository root, move it to `data/pabrikon.toml` first. Then copy the
+original scalable SVGs into the v2 source layout, one icon context at a time:
+
+```bash
+mkdir -p "$THEME_ROOT/icons/apps/scalable"
+find "$THEME_ROOT/OldTheme/apps/scalable" -type f -name '*.svg' \
+  -exec cp -p {} "$THEME_ROOT/icons/apps/scalable/" \;
+```
+
+Replace `OldTheme/apps` with the source directory used by that theme, and
+repeat for each context enabled in `data/pabrikon.toml`. Check for duplicate
+SVG basenames first: the v2 source layout is flat, so same-named files would
+overwrite one another when copied into one context. Copy rather than move the
+files so the original layout remains available for comparison. Pabrikon does
+not import raster assets, infer configuration from an upstream `index.theme`,
+discover nested theme roots, or normalize folders automatically.
+
+Review `[build.directories].enabled` and the theme metadata in
+`data/pabrikon.toml`. If you want to regenerate an existing root `index.theme`
+from that configuration, explicitly run `pabrikon theme init "$THEME_ROOT"
+--force`; this replaces the existing metadata file. Otherwise, edit the file
+directly with `pabrikon theme edit "$THEME_ROOT"`. Then check and build the
+prepared project:
+
+```bash
+pabrikon validate "$THEME_ROOT"
+pabrikon build "$THEME_ROOT"
+pabrikon package "$THEME_ROOT"
+```
+
+Inspect the generated `build/` tree and package before deciding whether to
+remove or reorganize any upstream files. Automated repository analysis and
+safe layout normalization remain planned, as described in the PRD.
+
+## Commands
+
+```text
+pabrikon init [TARGET] [--name NAME]
+pabrikon config edit [PATH] [--editor EDITOR]
+pabrikon validate [PATH]
+pabrikon build [PATH] [--all] [--size N] [--sizes N,N] [--directory DIR] [--icon NAME] [--dry-run]
+pabrikon clean [PATH] [--type build|png|svg|symlink] [--dry-run]
+pabrikon aliases edit [PATH] [--editor EDITOR]
+pabrikon aliases build [PATH] [--dry-run]
+pabrikon optimize [PATH] [--dry-run] [--in-place]
+pabrikon package [PATH] [--dry-run]
+pabrikon info [PATH]
+pabrikon list [icons|directories|aliases|generated] [PATH]
+pabrikon theme init [PATH] [--force]
+pabrikon theme show [PATH]
+pabrikon theme edit [PATH] [--editor EDITOR]
+pabrikon theme validate [PATH]
+```
+
+Run `pabrikon --help` or `pabrikon COMMAND --help` for details. Packaging
+requires a successful build and valid generated outputs. `--force` on
+`pabrikon theme init` allows replacing an existing `index.theme`.
+
+`pabrikon theme edit` opens the project's root `index.theme` in a terminal
+editor. Pabrikon selects the editor from `--editor`, then `$VISUAL`, `$EDITOR`,
+`vim`, or `nano`. If `index.theme` is missing, it creates the file from
+`data/pabrikon.toml` before opening it. For example:
+
+```bash
+pabrikon theme edit
+pabrikon theme edit . --editor nano
+```
+
+`--editor` is also available on `pabrikon aliases edit`.
+`pabrikon config edit` uses the same editor selection and only opens an
+existing `data/pabrikon.toml`.
+
+### Shell autocomplete
+
+Pabrikon supports argument completion in Bash and Zsh through `argcomplete`.
+After installing Pabrikon, add the matching line to your shell startup file:
+
+```bash
+# ~/.bashrc
+eval "$(register-python-argcomplete pabrikon)"
+```
+
+```zsh
+# ~/.zshrc
+eval "$(register-python-argcomplete pabrikon)"
+```
+
+Open a new shell, or reload its configuration with `source ~/.bashrc` or
+`source ~/.zshrc`. Completion includes registered commands, options, and
+arguments with known choices, such as `pabrikon clean --type`.
+
+All commands accept `--verbose`, `--quiet`, and `--json` (as well as `-v` and
+`-q`). Verbose mode adds per-file details where available. Quiet mode suppresses
+normal text while errors remain on standard error. JSON mode writes one
+machine-readable value to standard output; command errors use an object with
+`command`, `ok: false`, and an `error` message, and retain the command's normal
+exit code. JSON output takes precedence over quiet mode. These options can be
+placed before or after the command, including nested commands such as
+`pabrikon theme show --json`.
+
+`pabrikon validate` checks the TOML configuration, `index.theme`, source SVGs,
+aliases, and existing generated files. `pabrikon build` also writes the
+effective `index.theme` into `build/`, reuses outputs that are newer than their
+sources, and creates configured aliases. Use `--all` to rebuild every output.
+`pabrikon clean --dry-run` previews removal from `build/`; `--type png`,
+`--type svg`, and `--type symlink` limit cleanup to those generated files.
+`pabrikon optimize` writes optimized copies under
+`dist/optimized/icons/` by default, leaving source files unchanged. Finally,
+`pabrikon package` writes a deterministic `.tar.gz` under `dist/` after
+checking the generated theme.
+
+## Docker
+
+Run the unit tests in the test image:
+
+```bash
+docker build -f Dockerfile.test -t pabrikon-tests .
+docker run --rm pabrikon-tests
+```
+
+Build the CLI image and use it with a host project:
+
+```bash
+docker build -t pabrikon .
+docker run --rm pabrikon --help
+docker run --rm -v "$PWD/my-theme:/workspace" -w /workspace pabrikon validate .
+```
+
+## Development status
+
+The current CLI includes project initialization, validation, building,
+cleaning, alias generation, theme metadata, project information and listing,
+SVG optimization, and tar.gz packaging. Manual preparation of an existing
+theme is documented above; automatic analysis and layout normalization are not
+implemented yet. TOML aliases have replaced legacy CSV aliases; there is no
+automatic importer for external CSV mapping files. Browser preview remains a
+roadmap feature.
+
+### Freedesktop Icon Theme specification coverage
+
+Pabrikon supports the core theme workflow, but it does not implement every
+feature in the [Freedesktop Icon Theme Specification 0.10](https://specifications.freedesktop.org/icon-theme/0.10/).
+Current limitations include:
+
+- `index.theme` generation covers basic `Name`, `Comment`, `Inherits`,
+  `Directories`, and generated `Fixed`/`Scalable` directories. Configuration
+  and validation do not yet cover all metadata such as `Hidden`, `Example`,
+  localized names/comments, `Threshold`, or every per-directory field.
+- Pabrikon uses SVG sources and can emit SVG and PNG. It does not support XPM
+  or the per-icon `.icon` metadata sidecar format.
+- It does not implement desktop icon lookup, inherited-theme fallback
+  resolution, theme installation, or icon-cache management. `Inherits` is
+  written as metadata; Pabrikon does not resolve the inherited themes.
+- HiDPI directories such as `22x22@2x` are not configurable yet. This is a
+  compatibility convention outside specification 0.10, which does not define
+  a `Scale` field.
+
+These gaps are recorded as future requirements in
+[`docs/PRD/PRD-pabrikon.md`](docs/PRD/PRD-pabrikon.md#181-freedesktop-icon-theme-010-coverage).

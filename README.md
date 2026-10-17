@@ -100,7 +100,9 @@ my-theme/
 │   ├── categories/
 │   │   └── scalable/
 │   ├── devices/
-│   │   └── scalable/
+│   │   ├── scalable/
+│   │   └── 16/
+│   │       └── auth-sim.svg        # Optional fixed-size SVG source
 │   ├── places/
 │   │   └── scalable/
 │   └── status/
@@ -126,7 +128,10 @@ package. A fresh project does not yet contain `build/` or package output.
 `pabrikon init` creates the configured source context directories, each with a
 `scalable/` folder. Put original SVGs in `icons/<context>/scalable/`; Pabrikon
 keeps generated assets in `build/`, separate from editable sources. Contexts
-and raster sizes are controlled by `data/pabrikon.toml`.
+and raster sizes are controlled by `data/pabrikon.toml`. Sources in any
+directory declared by `index.theme` are supported; the directory's `Type` and
+`Size` control raster outputs, while `svg` format preserves the source SVG at
+the same relative directory.
 
 ## Project configuration
 
@@ -216,36 +221,64 @@ and aliases in contexts that are not enabled in `data/pabrikon.toml`.
 
 ### Use Pabrikon with an existing icon theme
 
-You can prepare an existing local checkout manually. Work on a branch or
-backup, and run `pabrikon init` against the actual theme root (some repositories
-keep it in a nested directory). Initialization adds Pabrikon starter files and
-missing configured directories; it preserves existing files and does not scan,
-move, or rewrite existing icons.
+Preview adoption from an existing local checkout before applying it:
 
 ```bash
-# Replace these paths with the checkout and theme root you have.
-THEME_ROOT="$PWD/upstream-theme"
-pabrikon init "$THEME_ROOT"
+pabrikon init --from "$PWD/upstream-theme" --dry-run
+pabrikon init --from "$PWD/upstream-theme" --apply
 ```
 
-If the repository already has `data/pabrikon.toml`, do not initialize it again;
-edit it with `pabrikon config edit "$THEME_ROOT"`. If its Pabrikon config is at
-the repository root, move it to `data/pabrikon.toml` first. Then copy the
-original scalable SVGs into the v2 source layout, one icon context at a time:
+When a checkout contains multiple themes, use `--theme-root` with a detected
+repository-relative path. For a remote project, provide the URL and clone
+directory explicitly:
 
 ```bash
-mkdir -p "$THEME_ROOT/icons/apps/scalable"
-find "$THEME_ROOT/OldTheme/apps/scalable" -type f -name '*.svg' \
-  -exec cp -p {} "$THEME_ROOT/icons/apps/scalable/" \;
+pabrikon init --from https://github.com/BlankOn/tebu-flat.git \
+  --target "$PWD/tebu-flat" --ref master --dry-run
+pabrikon init --from https://github.com/BlankOn/tebu-flat.git \
+  --target "$PWD/tebu-flat" --ref master --apply
 ```
 
-Replace `OldTheme/apps` with the source directory used by that theme, and
-repeat for each context enabled in `data/pabrikon.toml`. Check for duplicate
-SVG basenames first: the v2 source layout is flat, so same-named files would
-overwrite one another when copied into one context. Copy rather than move the
-files so the original layout remains available for comparison. Pabrikon does
-not import raster assets, infer configuration from an upstream `index.theme`,
-discover nested theme roots, or normalize folders automatically.
+Adoption reads the selected theme's `index.theme`, proposes
+`data/pabrikon.toml` and copies each recognized SVG to the matching directory
+under `icons/`, following the selected theme's `index.theme`. For example,
+`devices/16/auth-sim.svg` and `devices/64/auth-sim.svg` remain in those
+directories. The build writes SVGs to those same relative directories and
+renders PNGs into the declared fixed-size directories; a fixed-size source
+takes precedence over a scalable source when both provide the same icon and
+size.
+Original files, metadata, license files, and
+unrecognized assets remain in place. The report identifies alternate metadata,
+submodules that were not initialized, ignored paths, and filename collisions.
+Use `--verbose` or `--json` to inspect every ignored path and collision. Files
+whose names collide in the v2 layout are all skipped; aliases that target those
+ambiguous icons are skipped too, while unambiguous assets can still be adopted.
+Unsafe destination paths stop the operation without writing the project config.
+The generated config uses `license = "UNKNOWN"`; review the upstream license
+and set the correct SPDX identifier manually before packaging. Existing
+Pabrikon configuration requires `--regenerate-config`, which keeps a `.bak`
+copy.
+
+Recognized SVG symlinks whose targets resolve to adopted source icons are
+proposed as aliases in the dry-run report and written to
+`data/aliases.toml` with `--apply`. Broken, cyclic, escaping, unsupported, or
+ambiguous links are reported for manual review. If `data/aliases.toml` already
+exists, adoption leaves it unchanged and reports the proposed aliases instead.
+Symlinks are never rewritten or removed.
+
+Remote dry-run explicitly clones the selected URL to `--target` so Pabrikon can
+inspect its files. Re-running the same command with `--apply` reuses that clone.
+Submodules are not initialized, Git hooks and configured filters are disabled
+for cloning, and repository scripts are never run. Raster assets, HiDPI
+variants, and layouts without a recognized SVG source are listed for manual
+review rather than converted or guessed.
+
+Scalable folders are recognized from `index.theme` sections, so a literal
+`scalable/` folder is not required when metadata marks a context folder such as
+Citropy's `apps/` as scalable. KDE Breeze generates `index.theme` during its
+own CMake build; prepare that theme root before adoption. These upstream
+layouts remain acceptance fixtures, so review the dry-run report before
+applying.
 
 Review `[build.directories].enabled` and the theme metadata in
 `data/pabrikon.toml`. If you want to regenerate an existing root `index.theme`
@@ -268,6 +301,8 @@ safe layout normalization remain planned, as described in the PRD.
 
 ```text
 pabrikon init [TARGET] [--name NAME]
+pabrikon init --from SOURCE [--theme-root PATH] [--dry-run|--apply]
+pabrikon init --from GIT_URL --target DIRECTORY [--ref REF] [--dry-run|--apply]
 pabrikon config edit [PATH] [--editor EDITOR]
 pabrikon validate [PATH]
 pabrikon build [PATH] [--all] [--size N] [--sizes N,N] [--directory DIR] [--icon NAME] [--dry-run]
@@ -364,11 +399,12 @@ docker run --rm -v "$PWD/my-theme:/workspace" -w /workspace pabrikon validate .
 
 The current CLI includes project initialization, validation, building,
 cleaning, alias generation, theme metadata, project information and listing,
-SVG optimization, and tar.gz packaging. Manual preparation of an existing
-theme is documented above; automatic analysis and layout normalization are not
-implemented yet. TOML aliases have replaced legacy CSV aliases; there is no
-automatic importer for external CSV mapping files. Browser preview remains a
-roadmap feature.
+SVG optimization, tar.gz packaging, and adoption of recognized existing icon
+themes. Adoption can copy scalable SVGs and import safe SVG symlinks as aliases;
+it remains partial while the documented repository fixtures and less common
+layouts are being verified. TOML aliases have replaced legacy CSV aliases;
+there is no automatic importer for external CSV mapping files. Browser preview
+remains a roadmap feature.
 
 ### Freedesktop Icon Theme specification coverage
 
@@ -385,9 +421,10 @@ Current limitations include:
 - It does not implement desktop icon lookup, inherited-theme fallback
   resolution, theme installation, or icon-cache management. `Inherits` is
   written as metadata; Pabrikon does not resolve the inherited themes.
-- HiDPI directories such as `22x22@2x` are not configurable yet. This is a
-  compatibility convention outside specification 0.10, which does not define
-  a `Scale` field.
+- Adopted `index.theme` directories preserve declared `Scale` values, including
+  `@2x` and `@3x` paths, when planning SVG and PNG outputs. Pabrikon does not
+  yet expose scale as a standalone project configuration option. This is a
+  compatibility convention outside specification 0.10.
 
 These gaps are recorded as future requirements in
 [`docs/PRD/PRD-pabrikon.md`](docs/PRD/PRD-pabrikon.md#181-freedesktop-icon-theme-010-coverage).

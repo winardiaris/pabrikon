@@ -11,7 +11,7 @@ from .errors import PabrikonError, UsageError
 from .project import IconSource, Project, is_valid_icon_name
 from .render import RenderError, RsvgRenderer
 from .svg import check_svg
-from .theme import render_index_theme, size_dir
+from .theme import render_index_theme
 
 
 @dataclass(frozen=True)
@@ -67,12 +67,19 @@ def select_sources(project: Project, directory: str | None, icon: str | None) ->
     if directory:
         project.require_directory(directory)
     sources = project.sources(directory)
+    sources.sort(key=lambda source: (source.context, source.name, source.directory, str(source.path)))
     if icon:
         sources = [source for source in sources if icon in (source.name, source.key)]
         if not sources:
-            where = f"icons/{directory}/scalable/" if directory else "icons/<directory>/scalable/"
-            raise PabrikonError(f"icon source not found: {icon}\n\nExpected:\n    {where}{icon}.svg",
-                                hint="Run `pabrikon list icons`")
+            where = (
+                f"icons/{directory}/<declared-directory>/"
+                if directory
+                else "icons/<context>/<declared-directory>/"
+            )
+            raise PabrikonError(
+                f"icon source not found: {icon}\n\nExpected:\n    {where}{icon}.svg",
+                hint="Run `pabrikon list icons`",
+            )
     return sources
 
 
@@ -80,15 +87,35 @@ def plan_build(project: Project, sources: list[IconSource], sizes: list[int], re
     """Plan outputs that are missing or older than their source."""
     report = BuildReport(sources=len(sources))
     formats = project.config.build.formats
+    fixed_variants = {
+        (source.context, source.name, source.directory)
+        for source in sources
+        if source.fixed_size is not None
+    }
+    raster_directories = [
+        spec
+        for spec in project.theme_directories()
+        if spec.directory_type != "Scalable" and spec.size in sizes
+    ]
     for source in sources:
         if not is_valid_icon_name(source.name):
             report.failures.append((str(source.path.relative_to(project.root)), "invalid icon file name"))
             continue
         outputs: list[tuple[Path, int | None]] = []
-        if "png" in formats:
-            outputs += [(project.build_dir / source.context / size_dir(size) / f"{source.name}.png", size) for size in sizes]
+        if source.fixed_size is not None:
+            if "png" in formats and source.fixed_size in sizes:
+                output = project.build_dir / source.directory / f"{source.name}.png"
+                outputs.append((output, source.fixed_size * source.scale))
+        else:
+            if "png" in formats:
+                outputs += [
+                    (project.build_dir / spec.path / f"{source.name}.png", spec.size * spec.scale)
+                    for spec in raster_directories
+                    if spec.context == source.context
+                    and (source.context, source.name, spec.path) not in fixed_variants
+                ]
         if "svg" in formats:
-            outputs.append((project.build_dir / source.context / "scalable" / f"{source.name}.svg", None))
+            outputs.append((project.build_dir / source.directory / f"{source.name}.svg", None))
 
         source_mtime = source.path.stat().st_mtime
         pending = [

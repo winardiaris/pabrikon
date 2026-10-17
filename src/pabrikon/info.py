@@ -11,7 +11,12 @@ LIST_KINDS = ("icons", "directories", "aliases", "generated")
 def list_items(project: Project, kind: str) -> list[str]:
     """Return sorted project entries for the requested listing category."""
     if kind == "icons":
-        return [source.key for source in project.sources()]
+        return [
+            f"{source.key} [{source.directory}]"
+            if source.directory != f"{source.context}/scalable"
+            else source.key
+            for source in project.sources()
+        ]
     if kind == "directories":
         return list(project.config.build.directories)
     if kind == "aliases":
@@ -35,7 +40,10 @@ def project_info(project: Project) -> dict:
             "png": sum(1 for path in generated if path.suffix == ".png" and not path.is_symlink()),
             "aliases": len(load_aliases(project)),
         },
-        "directories": {ctx: len(project.sources(ctx)) for ctx in project.config.build.directories},
+        "directories": {
+            ctx: len(project.sources(ctx))
+            for ctx in project.config.build.directories
+        },
         "sizes": project.config.build.sizes,
         "last_build": last_build,
     }

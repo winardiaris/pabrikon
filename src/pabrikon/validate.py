@@ -8,7 +8,7 @@ from .config import CONFIG_FILE
 from .diagnostics import ERROR, WARNING, Diagnostic, error, warning
 from .project import SOURCE_SUBDIR, Project, is_valid_icon_name, walk_files
 from .svg import check_svg
-from .theme import size_dir, validate_index_theme
+from .theme import validate_index_theme
 
 SECTIONS = ("Configuration", "Theme metadata", "Icon directories", "SVG files", "Aliases", "Generated files")
 
@@ -30,8 +30,13 @@ def check_icon_directories(project: Project) -> list[Diagnostic]:
 
     found: list[Diagnostic] = []
     enabled = set(project.config.build.directories)
+    theme_directories = project.theme_directories()
+    declared_directories = {spec.path: spec.context for spec in theme_directories}
     for ctx in project.config.build.directories:
-        if not project.source_dir(ctx).is_dir():
+        if not any(
+            spec.context == ctx and (project.icons_dir / spec.path).is_dir()
+            for spec in theme_directories
+        ):
             found.append(warning(f"icons/{ctx}/{SOURCE_SUBDIR}", "enabled directory is missing"))
 
     for path in walk_files(project.icons_dir):
@@ -45,20 +50,29 @@ def check_icon_directories(project: Project) -> list[Diagnostic]:
                 found.append(warning(label, "symbolic links are not used as sources; declare aliases in data/aliases.toml"))
             continue
         parts = path.relative_to(project.icons_dir).parts
-        if parts[0] not in enabled:
+        parent = Path(*parts[:-1]).as_posix()
+        context = declared_directories.get(parent)
+        if context and context not in enabled:
+            found.append(warning(label, f"directory {context!r} is not enabled in {CONFIG_FILE}; file is ignored"))
+        elif context is None and parts[0] not in enabled and parts[0] not in {Path(item).parts[0] for item in declared_directories}:
             found.append(warning(label, f"directory {parts[0]!r} is not enabled in {CONFIG_FILE}; file is ignored"))
-        elif len(parts) != 3 or parts[1] != SOURCE_SUBDIR or path.suffix != ".svg":
-            found.append(warning(label, f"orphaned file; sources must be icons/{parts[0]}/{SOURCE_SUBDIR}/<name>.svg"))
+        elif context is None or path.suffix != ".svg":
+            found.append(
+                warning(
+                    label,
+                    "orphaned file; its parent directory must be declared in index.theme and the source must be SVG",
+                )
+            )
     return found
 
 
 def check_svg_sources(project: Project) -> list[Diagnostic]:
     """Validate source SVGs and report duplicate names or missing viewBoxes."""
     found: list[Diagnostic] = []
-    contexts_by_name: dict[str, list[str]] = defaultdict(list)
+    contexts_by_name: dict[str, set[str]] = defaultdict(set)
     for source in project.sources():
         label = _relative(project, source.path)
-        contexts_by_name[source.name].append(source.context)
+        contexts_by_name[source.name].add(source.context)
         if not is_valid_icon_name(source.name):
             found.append(error(label, "invalid icon name; use letters, digits, '.', '_', '+', '@' or '-'"))
             continue
@@ -69,7 +83,7 @@ def check_svg_sources(project: Project) -> list[Diagnostic]:
             found.append(warning(label, "missing viewBox; the icon may not scale correctly"))
     for name, contexts in sorted(contexts_by_name.items()):
         if len(contexts) > 1:
-            found.append(warning(name, f"duplicate icon name in directories: {', '.join(contexts)}"))
+            found.append(warning(name, f"duplicate icon name in directories: {', '.join(sorted(contexts))}"))
     return found
 
 
@@ -79,16 +93,37 @@ def check_generated(project: Project) -> list[Diagnostic]:
         return []
     found: list[Diagnostic] = []
     formats = project.config.build.formats
-    expected_dirs = [size_dir(size) for size in project.config.build.sizes] if "png" in formats else []
-    if "svg" in formats:
-        expected_dirs.append("scalable")
     sources = project.sources()
     source_keys = {source.key for source in sources}
+    fixed_variants = {
+        (source.context, source.name, source.directory)
+        for source in sources
+        if source.fixed_size is not None
+    }
 
     for source in sources:
+        if source.fixed_size is not None:
+            expected_outputs = (
+                [(source.directory, "png")]
+                if "png" in formats and source.fixed_size in project.config.build.sizes
+                else []
+            )
+        else:
+            expected_outputs = [
+                (spec.path, "png")
+                for spec in project.theme_directories()
+                if "png" in formats
+                and spec.context == source.context
+                and spec.directory_type != "Scalable"
+                and spec.size in project.config.build.sizes
+                and (source.context, source.name, spec.path) not in fixed_variants
+            ]
+        if "svg" in formats:
+            expected_outputs.append((source.directory, "svg"))
         missing = [
-            subdir for subdir in expected_dirs
-            if not (project.build_dir / source.context / subdir / f"{source.name}.{'svg' if subdir == 'scalable' else 'png'}").is_file()
+            directory.rsplit("/", 1)[-1]
+            for directory, extension in expected_outputs
+            if not (project.build_dir / directory / f"{source.name}.{extension}").is_file()
         ]
         if missing:
             found.append(warning(_relative(project, source.path), f"missing generated size(s): {', '.join(missing)}; run `pabrikon build`"))

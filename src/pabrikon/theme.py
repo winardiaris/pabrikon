@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import configparser
+import re
+from dataclasses import dataclass
 from pathlib import Path
+from pathlib import PurePosixPath
 
 from .config import ProjectConfig
 from .diagnostics import Diagnostic, error, warning
@@ -19,6 +22,7 @@ CONTEXTS = {
     "devices": "Devices",
     "emblems": "Emblems",
     "emotes": "Emotes",
+    "io": "Io",
     "mimetypes": "MimeTypes",
     "places": "Places",
     "status": "Status",
@@ -88,6 +92,53 @@ def parse_index_theme(text: str) -> configparser.ConfigParser:
     return parser
 
 
+@dataclass(frozen=True)
+class ThemeDirectory:
+    """Metadata needed to map an icon directory to its context and size behavior."""
+
+    path: str
+    context: str
+    directory_type: str
+    size: int
+    scale: int = 1
+
+
+def read_theme_directories(path: Path, config: ProjectConfig) -> list[ThemeDirectory]:
+    """Read safe icon directory declarations from index.theme, using generated defaults if absent."""
+    if not path.is_file():
+        parser = parse_index_theme(render_index_theme(config))
+    else:
+        parser = parse_index_theme(path.read_text(encoding="utf-8"))
+    if not parser.has_section(THEME_SECTION):
+        return []
+    header = parser[THEME_SECTION]
+    context_names = {value: key for key, value in CONTEXTS.items()}
+    found: list[ThemeDirectory] = []
+    directory_names = header.get("Directories", "").split(",")
+    directory_names.extend(header.get("ScaledDirectories", "").split(","))
+    for directory in (item.strip() for item in directory_names):
+        candidate = PurePosixPath(directory)
+        if not directory or candidate.is_absolute() or any(part in {".", ".."} for part in candidate.parts):
+            continue
+        if not parser.has_section(directory):
+            continue
+        section = parser[directory]
+        context = context_names.get(section.get("Context", ""))
+        try:
+            size = int(section.get("Size", ""))
+        except ValueError:
+            continue
+        inferred_scale = re.search(r"@(\d+)x$", directory)
+        try:
+            scale = int(section.get("Scale", inferred_scale.group(1) if inferred_scale else "1"))
+        except ValueError:
+            continue
+        directory_type = section.get("Type", "Threshold")
+        if context and size > 0 and scale > 0 and directory_type in VALID_TYPES:
+            found.append(ThemeDirectory(directory, context, directory_type, size, scale))
+    return found
+
+
 def validate_index_theme(path: Path, config: ProjectConfig, label: str = "index.theme") -> list[Diagnostic]:
     """Check required metadata and ensure configured build directories are declared."""
     if not path.is_file():
@@ -107,6 +158,7 @@ def validate_index_theme(path: Path, config: ProjectConfig, label: str = "index.
             found.append(error(label, f"[{THEME_SECTION}] is missing required key {key}"))
 
     declared = [item.strip() for item in header.get("Directories", "").split(",") if item.strip()]
+    declared.extend(item.strip() for item in header.get("ScaledDirectories", "").split(",") if item.strip())
     for directory in declared:
         if not parser.has_section(directory):
             found.append(error(label, f"directory {directory!r} is listed in Directories but has no section"))
@@ -114,20 +166,34 @@ def validate_index_theme(path: Path, config: ProjectConfig, label: str = "index.
         section = parser[directory]
         if not section.get("Size", "").isdigit():
             found.append(error(label, f"[{directory}] Size must be a positive integer"))
+        if not section.get("Scale", "1").isdigit() or int(section.get("Scale", "1")) < 1:
+            found.append(error(label, f"[{directory}] Scale must be a positive integer"))
         directory_type = section.get("Type", "Threshold")
         if directory_type not in VALID_TYPES:
             found.append(error(label, f"[{directory}] has invalid Type {directory_type!r}"))
 
     expected = theme_directories(config)
-    for directory in expected:
-        if directory not in declared:
-            found.append(
-                error(
-                    label,
-                    f"build output directory {directory!r} is not declared; desktops will not find its icons",
+    def is_standard_directory(directory: str) -> bool:
+        parts = PurePosixPath(directory).parts
+        return len(parts) == 2 and parts[0] in CONTEXTS and (
+            parts[1] == "scalable" or re.fullmatch(r"(\d+)x\1", parts[1]) is not None
+        )
+
+    dynamic_layout = any(not is_standard_directory(directory) for directory in declared)
+    if not dynamic_layout:
+        for directory in expected:
+            if directory not in declared:
+                found.append(
+                    error(
+                        label,
+                        f"build output directory {directory!r} is not declared; desktops will not find its icons",
+                    )
                 )
-            )
-    for directory in declared:
-        if directory not in expected:
-            found.append(warning(label, f"declared directory {directory!r} is not produced by the build configuration"))
+        for directory in declared:
+            if directory not in expected:
+                found.append(warning(label, f"declared directory {directory!r} is not produced by the build configuration"))
+    else:
+        declared_specs = read_theme_directories(path, config)
+        if not declared_specs:
+            found.append(error(label, "no usable directories with a supported Context, Type, and Size were declared"))
     return found

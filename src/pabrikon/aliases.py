@@ -9,7 +9,6 @@ from .config import CONFIG_FILE
 from .diagnostics import Diagnostic, error
 from .errors import ConfigError, PabrikonError
 from .project import Project, is_valid_icon_name, walk_files
-from .theme import size_dir
 
 
 @dataclass(frozen=True)
@@ -109,24 +108,48 @@ def plan_alias_links(project: Project, resolved: dict[str, str]) -> list[AliasLi
     Stale symbolic links in build/ are removed; regular files are never touched.
     """
     build_dir = project.build_dir
-    subdirs = [size_dir(size) for size in project.config.build.sizes] if "png" in project.config.build.formats else []
-    if "svg" in project.config.build.formats:
-        subdirs.append("scalable")
-
     wanted: dict[Path, str] = {}
+    sources = project.sources()
+    theme_directories = project.theme_directories()
+    raster_directories = [spec for spec in theme_directories if spec.directory_type != "Scalable"]
     for alias_key, source_key in sorted(resolved.items()):
         context, name = alias_key.split("/")
         target_context, target_name = source_key.split("/")
-        for subdir in subdirs:
-            extension = "svg" if subdir == "scalable" else "png"
-            target_file = build_dir / target_context / subdir / f"{target_name}.{extension}"
-            if not target_file.is_file():
-                continue
-            if target_context == context:
-                relative = f"{target_name}.{extension}"
-            else:
-                relative = f"../../{target_context}/{subdir}/{target_name}.{extension}"
-            wanted[build_dir / context / subdir / f"{name}.{extension}"] = relative
+        targets = [source for source in sources if source.key == source_key]
+        for target in targets:
+            output_directories = [spec for spec in theme_directories if spec.context == context]
+            for output_spec in output_directories:
+                if (
+                    "svg" in project.config.build.formats
+                    and output_spec.directory_type == target.directory_type
+                    and output_spec.size == target.size
+                    and output_spec.scale == target.scale
+                ):
+                    target_file = build_dir / target.directory / f"{target_name}.svg"
+                    link = build_dir / output_spec.path / f"{name}.svg"
+                    if target_file.is_file():
+                        wanted[link] = os.path.relpath(target_file, link.parent)
+                if "png" not in project.config.build.formats or output_spec.directory_type == "Scalable":
+                    continue
+                raster_spec = next(
+                    (
+                        spec
+                        for spec in raster_directories
+                        if spec.context == target_context
+                        and spec.size == output_spec.size
+                        and spec.directory_type == output_spec.directory_type
+                        and spec.scale == output_spec.scale
+                    ),
+                    None,
+                )
+                if raster_spec is None:
+                    continue
+                if target.fixed_size is not None and target.directory != raster_spec.path:
+                    continue
+                target_file = build_dir / raster_spec.path / f"{target_name}.png"
+                link = build_dir / output_spec.path / f"{name}.png"
+                if target_file.is_file():
+                    wanted[link] = os.path.relpath(target_file, link.parent)
 
     links: list[AliasLink] = []
     for link, target in wanted.items():

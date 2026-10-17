@@ -48,6 +48,10 @@ tools.
 .SH COMMANDS
 .TP
 .B init [TARGET] [--name NAME]
+.br
+.B init --from SOURCE [--theme-root PATH] [--dry-run|--apply]
+.br
+.B init --from GIT_URL --target DIRECTORY [--ref REF] [--dry-run|--apply]
 Create a project in TARGET (default: current directory). Creates
 .BR data/pabrikon.toml ,
 .BR README.md ,
@@ -63,6 +67,44 @@ If a root-level
 is found, move it to
 .B data/pabrikon.toml
 before initializing.
+.PP
+To adopt an existing icon-theme checkout, pass it explicitly with
+.BR --from .
+Pabrikon searches for
+.BR index.theme ,
+reports multiple candidate roots, and previews the proposed config and file
+copies by default. Use
+.B --theme-root
+to select a repository-relative theme directory and
+.B --apply
+to write the config and copy recognized scalable SVG files to
+.BR icons/<context>/scalable/ .
+Recognized SVG files are copied under
+.B icons/
+using their declared directory path from
+.BR index.theme .
+When SVG output is enabled, they are copied to the same relative directory in
+.BR build/ ; raster output follows the declared directory type and size.
+Original assets and metadata are preserved. Use
+.B --verbose
+or
+.B --json
+to inspect ignored paths. The proposed license is
+.B UNKNOWN
+until reviewed. Existing Pabrikon configuration requires
+.B --regenerate-config
+and is backed up before replacement.
+Recognized SVG symlinks to adopted icons are proposed as aliases and written to
+.B data/aliases.toml
+on apply. Broken, escaping, unsupported, or ambiguous links are reported for
+manual review. An existing aliases file is preserved and is not overwritten.
+.PP
+For remote adoption, provide an explicit Git URL and
+.BR --target .
+The preview clones the URL into that directory; re-running the command with
+.B --apply
+reuses the matching checkout. Submodules are not initialized, and repository
+scripts are not run.
 .TP
 .B config edit [PATH] [--editor EDITOR]
 Open an existing
@@ -258,8 +300,12 @@ my-theme/
 .PP
 Each enabled context in
 .B build.directories.enabled
-has a source directory at
+uses scalable sources under
 .B icons/<context>/scalable/ .
+SVG inputs can be stored in any directory declared by
+.BR index.theme .
+The declared type and size determine PNG rendering; SVG output retains the
+source directory structure.
 Raster sizes and output formats are configured in
 .BR data/pabrikon.toml .
 The
@@ -267,44 +313,28 @@ The
 directory is created by the first build and can be regenerated without
 changing the source tree.
 .SH EXISTING PROJECTS
-Pabrikon can be used manually with an existing icon-theme checkout. If
-.B data/pabrikon.toml
-does not exist, run
-.B pabrikon init
-with the actual theme root; some repositories store the theme in a nested
-directory. Initialization preserves existing files and creates missing
-Pabrikon starter files, but does not infer configuration or rearrange assets.
-.PP
-Copy original scalable SVGs into
-.B icons/<context>/scalable/
-for each enabled context. For example:
+For recognized SVG layouts, preview and apply the
+generated configuration and copies with:
 .nf
-mkdir -p /path/to/theme-root/icons/apps/scalable
-find /path/to/theme-root/ExistingTheme/apps/scalable -type f -name '*.svg' \\
-  -exec cp -p {} /path/to/theme-root/icons/apps/scalable/ \\\\;
+pabrikon init --from /path/to/theme-checkout --dry-run
+pabrikon init --from /path/to/theme-checkout --apply
 .fi
 .PP
-Adjust the source path for the theme and repeat for each context. Check for
-duplicate SVG basenames first; the target context is flat, so same-named files
-would overwrite each other. Copy rather than move the files so the original
-layout remains intact. Edit
+Review
 .B data/pabrikon.toml
-with
-.BR "pabrikon config edit /path/to/theme-root" .
-If that file already exists, edit it instead of running init again. If a
-Pabrikon config is at the repository root, move it to
-.B data/pabrikon.toml
-before initialization. Review the config and existing
+and correct its
+.B UNKNOWN
+license field before packaging. The adopter leaves upstream
 .B index.theme
-before building. To replace an existing
+and original source files in place. Recognized SVG symlinks are converted to
+aliases in
+.B data/aliases.toml
+unless that file already exists. Raster-only assets and unrecognized folder
+layouts remain untouched and are reported for manual review. To regenerate an
+existing root
 .B index.theme
-from the config, explicitly use
+from Pabrikon config, explicitly use
 .BR "pabrikon theme init /path/to/theme-root --force" .
-.PP
-Pabrikon does not yet discover nested theme roots, infer settings from an
-upstream
-.BR index.theme ,
-import raster assets, or normalize the repository layout automatically.
 .SH EXAMPLES
 .TP
 Create a project:
@@ -358,13 +388,19 @@ Validation or execution failed.
 .B 2
 Invalid command-line arguments or configuration.
 .SH LIMITATIONS
-Automatic project analysis and layout normalization are not implemented yet;
-see
-.BR "EXISTING PROJECTS" .
+Existing-project adoption supports recognized scalable and fixed-size SVG
+layouts and safe SVG symbolic-link aliases, but it does not normalize every
+upstream theme layout. HiDPI variants are reported for manual review. KDE
+Breeze may need its generated
+.B index.theme
+before adoption.
 Pabrikon v2 uses
 .B data/aliases.toml
 instead of the legacy CSV alias tables and does not import external CSV maps.
-Browser preview is not currently available.
+It does not support XPM assets, per-icon
+.B .icon
+metadata, HiDPI directory configuration, inherited-theme lookup, installation,
+or icon-cache management. Browser preview is not currently available.
 .SH SEE ALSO
 .BR rsvg-convert (1),
 .BR svgcleaner (1)

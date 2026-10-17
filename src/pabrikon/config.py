@@ -205,8 +205,8 @@ def format_toml_value(value: str | int | bool | list) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
-def write_config(path: Path, config: ProjectConfig) -> Path:
-    """Write the project's canonical TOML representation and return its path."""
+def render_config(config: ProjectConfig) -> str:
+    """Return the project's canonical TOML representation."""
     v = format_toml_value
     lines = [
         "[project]",
@@ -230,5 +230,10 @@ def write_config(path: Path, config: ProjectConfig) -> Path:
         "[validation]",
         f"strict = {v(config.validation.strict)}",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return "\n".join(lines) + "\n"
+
+
+def write_config(path: Path, config: ProjectConfig) -> Path:
+    """Write the project's canonical TOML representation and return its path."""
+    path.write_text(render_config(config), encoding="utf-8")
     return path

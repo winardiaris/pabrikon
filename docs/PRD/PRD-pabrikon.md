@@ -538,10 +538,10 @@ Pabrikon must support adding v2 project configuration to an existing icon-theme 
 Proposed CLI:
 
 ```bash
-# Inspect the current checkout and preview the generated config and file moves.
+# Inspect the current checkout and preview the generated config and file copies.
 pabrikon init --from . --dry-run
 
-# Apply the reviewed config and normalize the recognized icon directories.
+# Apply the reviewed config and copy recognized SVGs into the v2 layout.
 pabrikon init --from . --apply
 
 # Explicitly clone and adopt a remote repository into a target directory.
@@ -554,12 +554,16 @@ When adopting a project, Pabrikon must:
 * accept a local directory or an explicitly supplied Git URL; never fetch or clone a remote project implicitly;
 * locate the icon-theme root by inspecting project metadata and icon directories, including nested roots; report ambiguity when more than one candidate theme root is found;
 * inspect `index.theme`, recognized context/size directories, SVG and raster assets, and symbolic links to infer a proposed `data/pabrikon.toml`;
+* detect safe icon-file symbolic links that represent aliases and propose corresponding entries in `data/aliases.toml`;
 * derive only values supported by repository evidence. Show defaults or request user input for unknown project metadata instead of inventing it;
-* produce a dry-run report containing the proposed TOML, detected theme root, recognized and ignored paths, and every planned move or directory creation;
-* on explicit apply, normalize recognized assets to the configured v2 source layout (`icons/<context>/scalable/` for SVG source icons), creating required directories from `build.directories.enabled`;
+* produce a dry-run report containing the proposed TOML, detected theme root, recognized and ignored paths, and every planned copy or directory creation;
+* on explicit apply, copy recognized assets to the configured v2 source layout (`icons/<context>/scalable/` for SVG source icons), creating required directories from `build.directories.enabled` while retaining upstream source files;
+* on explicit apply, write the reviewed alias entries to `data/aliases.toml` when safe aliases were detected;
 * preserve source assets and unrecognized files; never silently delete or overwrite them;
-* stop with an actionable error on path collisions, ambiguous mappings, unsupported asset layouts, or unsafe symbolic links, and leave the source tree unchanged when the operation cannot be completed safely;
+* report source assets that collide in the v2 layout, skip every colliding source and any alias targeting an ambiguous icon, and continue applying unambiguous assets; refuse unsafe write paths;
 * refuse to overwrite an existing `data/pabrikon.toml` unless the user explicitly requests regeneration; retain a backup when regenerating it.
+
+For symbolic-link aliases, use the link filename without its extension as the alias key. Resolve relative targets within the selected theme root and map them to canonical `context/name` targets, omitting the context when the target is in the same context. Preserve upstream links and source files. Import only links whose targets resolve to recognized, unambiguous adopted icon assets. Report broken links, links escaping the theme root, directory links, unsupported targets, cycles, and collisions with canonical icon names for manual review; do not turn them into aliases. The dry-run report must show every proposed alias and skipped link. If `data/aliases.toml` already exists, do not overwrite it; report the conflict and retain proposed aliases for review. Do not infer aliases from links that merely deduplicate size-specific assets or would collapse distinct variants to one Pabrikon source name.
 
 The initial supported normalization should map clearly recognizable Linux icon-theme layouts using `index.theme` and context/size directory names. It must not guess the meaning of arbitrary directories. Files that cannot be mapped safely remain untouched and are listed in the report for manual review.
 
@@ -573,6 +577,8 @@ Use these public repositories as further acceptance fixtures for projects with d
 
 * [rudrab/Shadow](https://github.com/rudrab/Shadow) stores size directories such as `16x16/`, `22x22/`, and `128x128/` alongside `scalable/` at the repository root. It also contains several desktop-specific `index.theme` variants. Adoption must identify the actual theme root and report which metadata file it selects; it must not silently merge the alternate metadata files.
 * [cbrnix/Newaita](https://github.com/cbrnix/Newaita) contains separate `Newaita/` and `Newaita-dark/` theme roots. Each root contains icon contexts and additional theme files, including variant-generation scripts and a bundled icon-theme cache. Adoption must identify multiple candidate roots and let the user select one, while preserving scripts and other unrecognized files. Its README identifies the theme as CC BY-NC-SA 3.0, so adoption reports must preserve the repository's license files and metadata rather than replacing them with a default license.
+* [tinuxongit/citropy-kde-theme](https://github.com/tinuxongit/citropy-kde-theme/tree/main/icons/Citropy) has a nested `icons/Citropy/` theme root. Its `index.theme` declares context directories such as `apps`, `places`, and `devices` directly as scalable, without a `scalable/` path component. Adoption must use declared directory metadata to map these vectors.
+* [KDE/breeze-icons](https://github.com/KDE/breeze-icons) keeps source icons under `icons/<context>/<size>/`; its theme index is assembled during the CMake build from `breeze.theme.in` and `commonthemeinfo.theme.in`. The metadata declares fixed-size and scalable size directories, as well as `ScaledDirectories` entries such as `apps/22@2x`. Adoption must distinguish these variants and account for the generated theme root rather than assuming a checked-out source tree already has `index.theme`.
 
 These examples are acceptance-fixture candidates, not a claim of verified compatibility. Confirm their current layouts and expected mappings from pinned checkouts before marking adoption support complete.
 
@@ -903,9 +909,11 @@ known gaps and future requirements, not claims about current behavior:
   for new themes.
 * [ ] Decide whether to support per-icon `.icon` metadata files, including
   `DisplayName`, `EmbeddedTextRectangle`, and `AttachPoints`.
-* [ ] Investigate HiDPI directory conventions such as `22x22@2x`. This is a
-  compatibility requirement separate from specification 0.10: that version
-  does not define a `Scale` key. Do not describe `@2x` as a 0.10 requirement.
+* [~] Use `Scale` declared in an adopted `index.theme` to preserve directory
+  paths and render PNG pixels at the declared scale. Standalone scale
+  configuration and compatibility fixtures for conventions such as
+  `22x22@2x` remain open. This is separate from specification 0.10, which does
+  not define a `Scale` key.
 * [ ] Add compatibility fixtures and validation tests for supported metadata,
   output directories, SVG/PNG assets, and any adopted extensions.
 
@@ -1982,7 +1990,7 @@ Complete these tasks in order. The legacy implementation is reference material o
 ## Phase 3 — Create and Describe Icon Projects
 
 - [x] **7. Implement `pabrikon init`.** Creates starter project files/directories without overwriting existing content; initialization behavior is covered by tests.
-- [ ] **7a. Implement existing-project adoption.** Inspect a local theme root or explicitly cloned Git repository, locate nested or multiple theme roots, infer `data/pabrikon.toml` from `index.theme` and recognized assets, and provide a dry-run report before applying any changes. Normalize only safely recognized assets to the configured v2 layout, preserve source content and unrelated files, and never initialize submodules implicitly. Add integration fixtures for `BlankOn/tebu-flat`, `rudrab/Shadow`, `cbrnix/Newaita`, `snwh/paper-icon-theme`, `numixproject/numix-icon-theme`, and `GNOME/adwaita-icon-theme`, plus tests for ambiguous roots, alternate `index.theme` files, unknown folders, collisions, existing config, license preservation, and submodules.
+- [~] **7a. Implement existing-project adoption.** Local and explicitly cloned remote checkouts can be scanned for a unique or selected `index.theme` root. Dry-run reports inferred config, recognized SVG copies, proposed aliases from safe SVG symlinks, preserved/ignored paths, source collisions, alternate metadata, license files, and submodules; apply retains originals, skips ambiguous sources, writes aliases only when `data/aliases.toml` is absent, and backs up config only with `--regenerate-config`. Recognized SVGs are copied to `icons/<directory-declared-in-index.theme>/`; SVG outputs preserve those relative directories, while PNG outputs are rendered into matching declared fixed-size directories. Remaining: pinned acceptance fixtures for all eight repositories, metadata generation/root preparation for Breeze, explicit alternate metadata selection, and verified handling/reporting of HiDPI, symbolic, cursor, and other symlink cases. Do not claim full adoption compatibility until these checks pass.
 
 #### Existing-theme folder schemas reviewed for adoption
 
@@ -1998,9 +2006,13 @@ the repository trees, not a promise that Pabrikon already imports them:
 | [snwh/paper-icon-theme](https://github.com/snwh/paper-icon-theme/tree/master/Paper) | Repository contains `Paper/` and `Paper-Mono-Dark/`; the Paper theme includes `scalable/<context>/` SVG assets as well as fixed-size theme directories described by its metadata. The repository is archived and identifies separate licensing for icon assets and scripts. | Distinguish multiple theme roots, keep scalable source SVGs separate from rendered-size assets, and preserve attribution/license files. |
 | [numixproject/numix-icon-theme](https://github.com/numixproject/numix-icon-theme/tree/master/Numix) | `Numix/` contains size-first directories (`16/`, `22/`, `24/`, `32/`, `48/`, `64/`), `scalable/`, `index.theme`, and HiDPI directories such as `16@2x/` and `22@2x/`. | Recognize `@2x` as a separate scale convention; do not silently collapse it into regular sizes. |
 | [GNOME/adwaita-icon-theme](https://github.com/GNOME/adwaita-icon-theme/tree/master/Adwaita) | The repository has a nested `Adwaita/` asset tree with `16x16/`, `scalable/`, `symbolic/`, and `cursors/`; the repository-level `index.theme` and `src/` are outside that asset directory. The current `Adwaita/scalable/` tree uses context folders. | Allow metadata and assets to be located at different levels; preserve symbolic/cursor assets that are outside the current Pabrikon source model. |
+| [tinuxongit/citropy-kde-theme](https://github.com/tinuxongit/citropy-kde-theme/tree/main/icons/Citropy) | Nested theme root `icons/Citropy/`; `index.theme` declares direct context folders (`apps`, `places`, `devices`, `actions`, `categories`, `mimetypes`) as scalable. | Use directory declarations and each section's `Context`/`Type`; do not require a literal `scalable/` component. |
+| [KDE/breeze-icons](https://github.com/KDE/breeze-icons) | Source tree is under `icons/<context>/<size>/`; CMake assembles `index.theme` from `.theme.in` files. Metadata includes `ScaledDirectories` and `@2x`/`@3x` directories alongside fixed and scalable size-qualified directories. | Treat generated metadata as a prerequisite; preserve each declared source directory and output format, using directory type and size to plan raster outputs. |
 
-The common Pabrikon v2 source layout remains `icons/<context>/scalable/`.
-Adoption must use a dry-run to show each source-to-target mapping and report
+The default Pabrikon v2 source layout is `icons/<context>/scalable/`; adoption
+can preserve other directory layouts declared in `index.theme`. SVG outputs
+retain each source's relative directory, and raster outputs follow declared
+fixed-size directories. Adoption must use a dry-run to show each source-to-target mapping and report
 unsupported formats, scale variants, duplicate names, and files it will leave
 untouched. Do not flatten a tree when names collide. The reference repositories
 are fixtures for structure discovery; tests should not vendor icon artwork
@@ -2033,8 +2045,8 @@ unless its license and attribution are retained.
 - [x] **18. Implement `pabrikon package`.** Deterministic tar.gz packaging, archive contents, alias links, dry-run, and temporary-file handling are tested.
 - [x] **19. Complete CLI and automation behavior.** Shared verbose/quiet/JSON options work before and after commands, JSON is available across current commands with structured errors and preserved exit codes, and focused CLI tests cover the output modes.
 - [x] **20. Run end-to-end acceptance tests.** A fresh virtual environment installs the built wheel and exercises init, validate, build, optimize, package, clean, rebuild, and deterministic repackaging. CI installs librsvg and svgcleaner, and runs the acceptance suite, unit/integration/CLI tests, Ruff, mypy, and wheel-build checks.
-- [x] **21. Finish user documentation.** README and the man page cover installation, configuration, commands, layout, tools, limitations, manual preparation of an existing theme, and a copyable end-to-end workflow. Automatic project analysis and layout normalization remain the separate unfinished adoption feature in task 7a. Legacy Pabrikon CSV alias import is out of scope.
-- [x] **22. Review MVP completion and release (2026-10-17).** Reviewed all Required items in Section 33 against source, tests, CI, and docs. Unit, acceptance, CLI, lint/type-check, wheel-build, and user-documentation items have evidence. Stable MVP release is not ready because Required existing-project adoption (task 7a) has no implementation or repository fixtures yet. Browser preview, GUI, distro packages, advanced specification coverage, and AI icon generation remain deferred or outside MVP scope; they do not block this review. Re-run this review after task 7a is implemented and its six repository fixtures pass.
+- [x] **21. Finish user documentation.** README and the man page cover installation, configuration, commands, layout, tools, limitations, manual preparation, and the new preview/apply adoption workflow. Adoption remains partial pending broader repository fixtures and layout validation in task 7a. Legacy Pabrikon CSV alias import is out of scope.
+- [~] **22. Re-review MVP completion after adoption work.** Existing-project adoption now has a first implementation, but task 7a still lacks pinned acceptance fixtures for the eight reference repositories and verified mapping for every listed layout. Stable MVP release remains unready until those checks pass. Browser preview, GUI, distro packages, advanced specification coverage, and AI icon generation remain deferred or outside MVP scope. Complete this review after task 7a is finished.
 
 **MVP acceptance:** The end-to-end workflow succeeds from a clean checkout and required checks pass in CI. No legacy migration or compatibility documentation is required.
 

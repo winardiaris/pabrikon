@@ -11,6 +11,17 @@ from pabrikon.errors import PabrikonError, UsageError
 from pabrikon.project import Project
 
 
+def declare_theme_directories(root: Path, directories: list[tuple[str, int, str]]) -> None:
+    """Replace a context's generated directories with a dynamic index.theme layout."""
+    index = root / "index.theme"
+    lines = index.read_text(encoding="utf-8").splitlines()
+    declarations = ",".join(directory for directory, _, _ in directories)
+    lines = [f"Directories={declarations}" if line.startswith("Directories=") else line for line in lines]
+    for directory, size, directory_type in directories:
+        lines.extend(["", f"[{directory}]", f"Size={size}", f"Type={directory_type}", "Context=Devices"])
+    index.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def snapshot(directory: Path) -> dict[str, bytes]:
     return {
         path.relative_to(directory).as_posix(): (b"->" + os.readlink(path).encode()) if path.is_symlink() else path.read_bytes()
@@ -45,6 +56,85 @@ def test_build_renders_configured_sizes_and_copies_svg(project_root: Path, fake_
     assert (build / "index.theme").read_text(encoding="utf-8") == (project_root / "index.theme").read_text(encoding="utf-8")
     assert not list(build.rglob(".*.tmp"))
     assert source.read_text(encoding="utf-8").startswith("<svg")
+
+
+def test_fixed_size_svg_builds_only_its_matching_png(project_root: Path, fake_renderer: FakeRenderer) -> None:
+    declare_theme_directories(project_root, [("devices/16", 16, "Fixed")])
+    source = project_root / "icons" / "devices" / "16" / "auth-sim.svg"
+    source.parent.mkdir(parents=True)
+    source.write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"/>', encoding="utf-8")
+
+    assert main(["build", str(project_root), "--directory", "devices", "--icon", "auth-sim"]) == 0
+
+    assert fake_renderer.calls == [("auth-sim", 16)]
+    assert (project_root / "build/devices/16/auth-sim.png").is_file()
+    assert (project_root / "build/devices/16/auth-sim.svg").is_file()
+    assert not (project_root / "build/devices/22x22/auth-sim.png").exists()
+
+
+def test_scaled_directory_uses_index_theme_scale_for_png_pixels(
+    project_root: Path, fake_renderer: FakeRenderer
+) -> None:
+    declare_theme_directories(project_root, [("devices/16@2x", 16, "Fixed")])
+    index = project_root / "index.theme"
+    metadata = index.read_text(encoding="utf-8").replace(
+        "[devices/16@2x]\nSize=16\nType=Fixed\nContext=Devices",
+        "[devices/16@2x]\nSize=16\nScale=2\nType=Fixed\nContext=Devices",
+    )
+    index.write_text(metadata, encoding="utf-8")
+    source = project_root / "icons" / "devices" / "16@2x" / "auth-sim.svg"
+    source.parent.mkdir(parents=True)
+    source.write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"/>', encoding="utf-8")
+
+    assert main(["build", str(project_root), "--directory", "devices", "--icon", "auth-sim"]) == 0
+
+    assert fake_renderer.calls == [("auth-sim", 32)]
+    assert (project_root / "build/devices/16@2x/auth-sim.png").is_file()
+    assert (project_root / "build/devices/16@2x/auth-sim.svg").is_file()
+
+
+def test_scaled_directory_uses_index_theme_scale_for_png_pixels(
+    project_root: Path, fake_renderer: FakeRenderer
+) -> None:
+    declare_theme_directories(project_root, [("devices/16@2x", 16, "Fixed")])
+    index = project_root / "index.theme"
+    metadata = index.read_text(encoding="utf-8").replace(
+        "[devices/16@2x]\nSize=16\nType=Fixed\nContext=Devices",
+        "[devices/16@2x]\nSize=16\nScale=2\nType=Fixed\nContext=Devices",
+    )
+    index.write_text(metadata, encoding="utf-8")
+    source = project_root / "icons" / "devices" / "16@2x" / "auth-sim.svg"
+    source.parent.mkdir(parents=True)
+    source.write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"/>', encoding="utf-8")
+
+    assert main(["build", str(project_root), "--directory", "devices", "--icon", "auth-sim"]) == 0
+
+    assert fake_renderer.calls == [("auth-sim", 32)]
+    assert (project_root / "build/devices/16@2x/auth-sim.png").is_file()
+    assert (project_root / "build/devices/16@2x/auth-sim.svg").is_file()
+
+
+def test_fixed_variant_takes_precedence_over_scalable_png_at_same_size(
+    project_root: Path, fake_renderer: FakeRenderer
+) -> None:
+    declare_theme_directories(
+        project_root,
+        [("devices/16", 16, "Fixed"), ("devices/64", 64, "Scalable")],
+    )
+    scalable = project_root / "icons" / "devices" / "64" / "auth-sim.svg"
+    scalable.parent.mkdir(parents=True)
+    scalable.write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>scalable</title></svg>', encoding="utf-8")
+    fixed = project_root / "icons" / "devices" / "16" / "auth-sim.svg"
+    fixed.parent.mkdir(parents=True)
+    fixed.write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><title>fixed</title></svg>', encoding="utf-8")
+
+    assert main(["build", str(project_root), "--directory", "devices", "--icon", "auth-sim"]) == 0
+
+    png = (project_root / "build/devices/16/auth-sim.png").read_bytes()
+    assert b"fixed" in png
+    assert b"scalable" not in png
+    assert (project_root / "build/devices/64/auth-sim.svg").read_bytes() == scalable.read_bytes()
+    assert fake_renderer.calls.count(("auth-sim", 16)) == 1
 
 
 def test_build_generates_index_theme_when_project_has_none(project_root: Path, fake_renderer: FakeRenderer) -> None:

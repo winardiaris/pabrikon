@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .config import CONFIG_FILE, ProjectConfig, is_valid_name, load_config, write_config
 from .errors import ConfigError, PabrikonError, UsageError
-from .theme import render_index_theme
+from .theme import ThemeDirectory, read_theme_directories, render_index_theme
 
 SOURCE_SUBDIR = "scalable"
 
@@ -48,6 +48,15 @@ class IconSource:
     context: str
     name: str
     path: Path
+    directory: str
+    directory_type: str
+    size: int
+    scale: int = 1
+
+    @property
+    def fixed_size(self) -> int | None:
+        """Return the declared size for fixed directories, otherwise ``None``."""
+        return self.size if self.directory_type != "Scalable" else None
 
     @property
     def key(self) -> str:
@@ -124,21 +133,39 @@ class Project:
             )
 
     def sources(self, context: str | None = None) -> list[IconSource]:
-        """Return SVG sources at icons/<context>/scalable/*.svg, sorted.
+        """Return SVG sources from every declared icon directory, sorted.
 
         Symbolic links are skipped: a linked source may point outside the
         project, and `pabrikon validate` reports them instead.
         """
-        contexts = [context] if context else self.config.build.directories
         found: list[IconSource] = []
-        for ctx in contexts:
-            source_dir = self.source_dir(ctx)
+        for spec in self.theme_directories():
+            if spec.context not in self.config.build.directories or (context and spec.context != context):
+                continue
+            source_dir = self.icons_dir / spec.path
             if not source_dir.is_dir() or source_dir.is_symlink():
                 continue
             for path in sorted(source_dir.glob("*.svg")):
                 if path.is_file() and not path.is_symlink():
-                    found.append(IconSource(context=ctx, name=path.stem, path=path))
+                    found.append(
+                        IconSource(
+                            context=spec.context,
+                            name=path.stem,
+                            path=path,
+                            directory=spec.path,
+                            directory_type=spec.directory_type,
+                            size=spec.size,
+                            scale=spec.scale,
+                        )
+                    )
         return found
+
+    def theme_directories(self) -> list[ThemeDirectory]:
+        """Return directory metadata declared by the project's index.theme."""
+        try:
+            return read_theme_directories(self.index_theme, self.config)
+        except (OSError, UnicodeError, ValueError):
+            return []
 
 
 def init_project(target: Path, name: str | None = None) -> tuple[Path, list[Path]]:

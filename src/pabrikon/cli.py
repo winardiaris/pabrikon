@@ -15,6 +15,7 @@ from pathlib import Path
 from . import __version__
 from .errors import EXIT_FAILURE, EXIT_OK, ConfigError, PabrikonError
 from .aliases import AliasLink, apply_alias_links, load_aliases, plan_alias_links, resolve_aliases
+from .adopt import analyze_adoption, apply_adoption, clone_repository, is_git_url
 from .build import build_project, parse_size_values
 from .clean import CLEAN_TYPES, apply_clean, plan_clean
 from .config import CONFIG_FILE
@@ -113,7 +114,11 @@ def resolve_editor_command(requested: str | None) -> list[str]:
 
 def cmd_init(args: argparse.Namespace, out: Output) -> int:
     """Initialize a project and report the created starter paths."""
-    root, created = init_project(Path(args.target), name=args.name)
+    if args.source is not None:
+        return cmd_adopt(args, out)
+    if args.clone_target or args.ref or args.theme_root or args.regenerate_config or args.dry_run or args.apply:
+        raise PabrikonError("adoption options require --from SOURCE")
+    root, created = init_project(Path(args.target or "."), name=args.name)
     if args.json:
         emit_json({
             "command": "init",
@@ -125,6 +130,91 @@ def cmd_init(args: argparse.Namespace, out: Output) -> int:
     for path in created:
         out.detail(f"created {path}")
     out.info(f"Initialized project at {root}")
+    return EXIT_OK
+
+
+def cmd_adopt(args: argparse.Namespace, out: Output) -> int:
+    """Preview or apply adoption of an existing icon-theme checkout."""
+    source = args.source
+    if is_git_url(source):
+        if args.target is not None:
+            raise PabrikonError("use --target for the clone directory; do not pass a positional target")
+        if not args.clone_target:
+            raise PabrikonError(
+                "remote adoption requires --target DIRECTORY",
+                hint="Choose where Pabrikon should clone the explicitly supplied repository.",
+            )
+        repository = clone_repository(source, Path(args.clone_target).expanduser(), args.ref)
+    else:
+        if args.clone_target or args.ref:
+            raise PabrikonError("--target and --ref are only valid when --from is a Git URL")
+        if args.target is not None:
+            raise PabrikonError("do not pass a positional target with --from; use --theme-root to select a theme")
+        repository = Path(source).expanduser()
+
+    plan = analyze_adoption(
+        repository,
+        theme_root=args.theme_root,
+        name=args.name,
+        regenerate_config=args.regenerate_config,
+    )
+    dry_run = not args.apply
+    report = plan.to_dict(dry_run=dry_run)
+    created_paths: list[str] = []
+    if args.apply:
+        created_paths = apply_adoption(plan)
+        report["created"] = created_paths
+
+    if args.json:
+        emit_json(report)
+        return EXIT_OK
+
+    out.info("Adoption preview" if dry_run else "Adoption complete")
+    out.info(f"Repository: {plan.repository}")
+    out.info(f"Theme root: {plan.theme_root}")
+    out.info(f"Project config: {plan.config_path.relative_to(plan.repository)}")
+    out.info(f"Icon contexts: {', '.join(plan.config.build.directories)}")
+    for path in plan.alternate_metadata:
+        out.info(f"Alternate metadata left untouched: {path}")
+    for path in plan.license_files:
+        out.info(f"License file preserved: {path}")
+    for path in plan.submodules:
+        out.info(f"Submodule not initialized: {path}")
+    for item in plan.copies:
+        verb = "would copy" if dry_run else "copied"
+        out.info(f"{verb} {item.source.relative_to(plan.repository)} -> {item.destination.relative_to(plan.theme_root)}")
+    if plan.collisions:
+        out.info(f"Ambiguous icon sources skipped: {len(plan.collisions)}")
+        if getattr(args, "verbose", False):
+            for item in plan.collisions:
+                out.info(
+                    f"  {item.first_source} and {item.second_source} both map to {item.destination}"
+                )
+    if plan.aliases:
+        out.info(f"Icon aliases detected: {len(plan.aliases)}")
+        if plan.aliases_file_conflict:
+            out.info(f"Alias file already exists; proposed entries were not written: {plan.aliases_path}")
+        if dry_run or plan.aliases_file_conflict:
+            out.info("\nProposed data/aliases.toml entries:\n")
+            out.write(plan.render_aliases())
+        elif not dry_run:
+            out.info(f"Wrote aliases to {plan.aliases_path.relative_to(plan.theme_root)}")
+    if plan.skipped_links:
+        out.info(f"Symbolic links requiring manual review: {len(plan.skipped_links)}")
+        if getattr(args, "verbose", False):
+            for path, reason in plan.skipped_links:
+                out.info(f"  {path}: {reason}")
+    if plan.ignored:
+        out.info(f"Ignored and preserved paths: {len(plan.ignored)}")
+        if getattr(args, "verbose", False):
+            for path in plan.ignored:
+                out.info(f"  {path}")
+    if dry_run:
+        out.info("\nProposed data/pabrikon.toml:\n")
+        out.write(str(report["config"]))
+        out.info("\nReview the report, then run the same command with --apply to adopt these assets.")
+    else:
+        out.info(f"\nCreated {len(created_paths)} path(s). Original theme files were preserved.")
     return EXIT_OK
 
 
@@ -563,9 +653,17 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("path", nargs="?", default=".", help="Project directory (default: current)")
         return command
 
-    init = add_command("init", "Create a new icon-theme project", path=False)
-    init.add_argument("target", nargs="?", default=".", help="Directory to create or initialize (default: current)")
+    init = add_command("init", "Create a new icon-theme project or adopt an existing theme", path=False)
+    init.add_argument("target", nargs="?", default=None, help="Directory to initialize (default: current)")
     init.add_argument("--name", help="Project name (default: target directory name)")
+    init.add_argument("--from", dest="source", help="Adopt an existing local checkout or explicitly supplied Git URL")
+    init.add_argument("--target", dest="clone_target", help="Directory for cloning an explicit Git URL")
+    init.add_argument("--ref", help="Branch or tag to clone from a remote repository")
+    init.add_argument("--theme-root", help="Select a detected theme root relative to the checkout")
+    init.add_argument("--regenerate-config", action="store_true", help="Back up and replace an existing Pabrikon config")
+    adoption_mode = init.add_mutually_exclusive_group()
+    adoption_mode.add_argument("--dry-run", action="store_true", help="Preview adoption without writing the config or copies")
+    adoption_mode.add_argument("--apply", action="store_true", help="Apply the adoption plan")
     init.set_defaults(handler=cmd_init)
 
     config = commands.add_parser("config", help="Manage project configuration", parents=[common])

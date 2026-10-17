@@ -1,11 +1,24 @@
+FROM python:3.12-slim AS svgcleaner-builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential cargo librsvg2-bin \
+    && cargo install svgcleaner --version 0.9.5 --locked --root /usr/local \
+    && rm -rf /var/lib/apt/lists/*
+
 FROM python:3.12-slim
 
 WORKDIR /workspace
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends librsvg2-bin \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=svgcleaner-builder /usr/local/bin/svgcleaner /usr/local/bin/svgcleaner
 
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
 COPY tests/ ./tests/
 
-RUN python -m pip install --no-cache-dir pytest .
+RUN python -m pip install --no-cache-dir -e ".[dev]"
 
 CMD ["python", "-m", "pytest"]

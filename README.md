@@ -33,6 +33,10 @@ python -m pip install -e ".[dev]"
 pytest
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for system dependencies, all CI checks,
+and the Linux Docker development environment. macOS development has not been
+verified; Docker is available as a Linux-based option.
+
 The end-to-end acceptance test also needs `rsvg-convert` (librsvg) and
 `svgcleaner`; it is skipped when either executable is unavailable. CI installs
 both tools and runs the full suite, Ruff, mypy, and a wheel build.
@@ -339,7 +343,9 @@ checking the generated theme.
 
 ## Docker
 
-Run the unit tests in the test image:
+Build the Linux test image and run the complete contributor checks (unit,
+acceptance, lint, type check, and wheel build) as described in
+[CONTRIBUTING.md](CONTRIBUTING.md). To run only pytest in the test image:
 
 ```bash
 docker build -f Dockerfile.test -t pabrikon-tests .

@@ -1265,6 +1265,13 @@ This status was checked against the current source tree, CLI, tests, CI
 configuration, and documentation. It describes repository evidence, not release
 approval:
 
+**Release review (task 22): NOT READY for a stable v2 MVP release.** All
+Required items have implementation or workflow evidence except existing-project
+adoption. This feature is a Required MVP item and matches the planned workflow
+for preparing third-party icon-theme repositories. A pre-release may be made
+with this limitation stated, but it does not satisfy the current stable MVP
+scope. Folder-layout references reviewed for adoption are listed under task 7a.
+
 * `[x]` Implemented, with corresponding code and reasonable test or workflow evidence.
 * `[~]` Partially implemented; the note identifies the remaining work.
 * `[ ]` Not implemented, incomplete, or not verified in the repository.
@@ -1968,14 +1975,36 @@ Complete these tasks in order. The legacy implementation is reference material o
 
 - [x] **4. Add the Python package foundation.** `pyproject.toml`, `src/pabrikon/`, entry points, tests, and help/version behavior are present and covered by tests.
 - [x] **5. Add the CLI and configuration foundations.** Command registration, actionable errors, exit codes, TOML parsing/validation, `pabrikon config edit`, and focused tests are present.
-- [~] **6. Add baseline automation and contributor documentation.** GitHub Actions runs tests, builds a wheel, and checks Ruff and mypy; README documents local development and tests, but fuller contributor guidance remains limited.
+- [x] **6. Add baseline automation and contributor documentation.** GitHub Actions runs tests, builds a wheel, and checks Ruff and mypy. `CONTRIBUTING.md` documents prerequisites, equivalent local checks, pull-request expectations, and the Linux Docker workflow; macOS development is explicitly unverified.
 
 **Gate:** A clean checkout installs, the CLI starts, configuration errors are understandable, and CI runs the baseline checks.
 
 ## Phase 3 — Create and Describe Icon Projects
 
 - [x] **7. Implement `pabrikon init`.** Creates starter project files/directories without overwriting existing content; initialization behavior is covered by tests.
-- [ ] **7a. Implement existing-project adoption.** Inspect a local theme root or explicitly cloned Git repository, locate nested or multiple theme roots, infer `data/pabrikon.toml` from `index.theme` and recognized assets, and provide a dry-run report before applying any changes. Normalize only safely recognized assets to the configured v2 layout, preserve source content and unrelated files, and never initialize submodules implicitly. Add integration fixtures for `BlankOn/tebu-flat`, `rudrab/Shadow`, and `cbrnix/Newaita`, plus tests for ambiguous roots, alternate `index.theme` files, unknown folders, collisions, existing config, license preservation, and submodules.
+- [ ] **7a. Implement existing-project adoption.** Inspect a local theme root or explicitly cloned Git repository, locate nested or multiple theme roots, infer `data/pabrikon.toml` from `index.theme` and recognized assets, and provide a dry-run report before applying any changes. Normalize only safely recognized assets to the configured v2 layout, preserve source content and unrelated files, and never initialize submodules implicitly. Add integration fixtures for `BlankOn/tebu-flat`, `rudrab/Shadow`, `cbrnix/Newaita`, `snwh/paper-icon-theme`, `numixproject/numix-icon-theme`, and `GNOME/adwaita-icon-theme`, plus tests for ambiguous roots, alternate `index.theme` files, unknown folders, collisions, existing config, license preservation, and submodules.
+
+#### Existing-theme folder schemas reviewed for adoption
+
+These repositories show why adoption must inspect `index.theme` and actual paths
+instead of assuming one universal directory layout. The layouts below describe
+the repository trees, not a promise that Pabrikon already imports them:
+
+| Repository | Observed tree shape | Adoption case to cover |
+| --- | --- | --- |
+| [BlankOn/tebu-flat](https://github.com/BlankOn/tebu-flat) | The repository root contains a nested `Tebu-Flat/` theme and `.gitmodules`; icon contexts use `icons` upstream under paths such as `devices/scalable/`. | Find the nested theme root; do not fetch submodules implicitly. |
+| [rudrab/Shadow](https://github.com/rudrab/Shadow) | Theme root has `scalable/`, size-first directories from `8x8/` through `256x256/`, and several alternate `index.theme_*` files alongside `index.theme`. | Select metadata explicitly and map size-first context folders without treating alternate metadata as additional themes. |
+| [cbrnix/Newaita](https://github.com/cbrnix/Newaita) | Repository contains sibling theme roots `Newaita/` and `Newaita-dark/`. Each has context directories, a root `index.theme`, hidden `.places-*` variants, scripts, and an `icon-theme.cache`. | Report multiple theme roots; ignore or preserve helper files, cache, and variant directories unless the user selects them. Preserve the theme's license. |
+| [snwh/paper-icon-theme](https://github.com/snwh/paper-icon-theme/tree/master/Paper) | Repository contains `Paper/` and `Paper-Mono-Dark/`; the Paper theme includes `scalable/<context>/` SVG assets as well as fixed-size theme directories described by its metadata. The repository is archived and identifies separate licensing for icon assets and scripts. | Distinguish multiple theme roots, keep scalable source SVGs separate from rendered-size assets, and preserve attribution/license files. |
+| [numixproject/numix-icon-theme](https://github.com/numixproject/numix-icon-theme/tree/master/Numix) | `Numix/` contains size-first directories (`16/`, `22/`, `24/`, `32/`, `48/`, `64/`), `scalable/`, `index.theme`, and HiDPI directories such as `16@2x/` and `22@2x/`. | Recognize `@2x` as a separate scale convention; do not silently collapse it into regular sizes. |
+| [GNOME/adwaita-icon-theme](https://github.com/GNOME/adwaita-icon-theme/tree/master/Adwaita) | The repository has a nested `Adwaita/` asset tree with `16x16/`, `scalable/`, `symbolic/`, and `cursors/`; the repository-level `index.theme` and `src/` are outside that asset directory. The current `Adwaita/scalable/` tree uses context folders. | Allow metadata and assets to be located at different levels; preserve symbolic/cursor assets that are outside the current Pabrikon source model. |
+
+The common Pabrikon v2 source layout remains `icons/<context>/scalable/`.
+Adoption must use a dry-run to show each source-to-target mapping and report
+unsupported formats, scale variants, duplicate names, and files it will leave
+untouched. Do not flatten a tree when names collide. The reference repositories
+are fixtures for structure discovery; tests should not vendor icon artwork
+unless its license and attribution are retained.
 - [x] **8. Implement basic theme metadata support.** Generate, show, edit, and validate core `index.theme` metadata; terminal editing supports `--editor`, `$VISUAL`, `$EDITOR`, `vim`, and `nano`, and is covered by CLI tests. Full specification coverage remains open in Section 18.1.
 - [x] **9. Implement `pabrikon info` and basic listing.** Project metadata, source counts, and listing commands are implemented with tests.
 
@@ -2005,7 +2034,7 @@ Complete these tasks in order. The legacy implementation is reference material o
 - [x] **19. Complete CLI and automation behavior.** Shared verbose/quiet/JSON options work before and after commands, JSON is available across current commands with structured errors and preserved exit codes, and focused CLI tests cover the output modes.
 - [x] **20. Run end-to-end acceptance tests.** A fresh virtual environment installs the built wheel and exercises init, validate, build, optimize, package, clean, rebuild, and deterministic repackaging. CI installs librsvg and svgcleaner, and runs the acceptance suite, unit/integration/CLI tests, Ruff, mypy, and wheel-build checks.
 - [x] **21. Finish user documentation.** README and the man page cover installation, configuration, commands, layout, tools, limitations, manual preparation of an existing theme, and a copyable end-to-end workflow. Automatic project analysis and layout normalization remain the separate unfinished adoption feature in task 7a. Legacy Pabrikon CSV alias import is out of scope.
-- [ ] **22. Review MVP completion and release.** Check every Required item in Section 33 and the Definition of Done in Section 40. Record known gaps; do not mark deferred features as MVP requirements.
+- [x] **22. Review MVP completion and release (2026-10-17).** Reviewed all Required items in Section 33 against source, tests, CI, and docs. Unit, acceptance, CLI, lint/type-check, wheel-build, and user-documentation items have evidence. Stable MVP release is not ready because Required existing-project adoption (task 7a) has no implementation or repository fixtures yet. Browser preview, GUI, distro packages, advanced specification coverage, and AI icon generation remain deferred or outside MVP scope; they do not block this review. Re-run this review after task 7a is implemented and its six repository fixtures pass.
 
 **MVP acceptance:** The end-to-end workflow succeeds from a clean checkout and required checks pass in CI. No legacy migration or compatibility documentation is required.
 
